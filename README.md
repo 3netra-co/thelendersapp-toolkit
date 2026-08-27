@@ -1,4 +1,4 @@
-# Legacy Build Samples – Anupam Tripathi
+# The Lenders App - Toolkit
 
 This repository is a curated collection of code snippets, prototypes, and solution components built over the course of 15+ years. These samples were developed using various languages and tools such as Python, SQL (Oracle/PostgreSQL/SQL Server), SAS, Excel, and cloud platforms (AWS/GCP).
 
