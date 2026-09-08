@@ -1,54 +1,41 @@
-# The Lenders App - Toolkit
+# The Lenders App Toolkit
 
-This repository is a curated collection of code snippets, prototypes, and solution components built over the course of 15+ years. These samples were developed using various languages and tools such as Python, SQL (Oracle/PostgreSQL/SQL Server), SAS, Excel, and cloud platforms (AWS/GCP).
+The Lenders App Toolkit is an open-source project in its earliest development
+stage.
 
----
+The repository currently contains:
 
-## Purpose
+- The public placeholder site at [toolkit.thelenders.app](https://toolkit.thelenders.app)
+- The isolated AWS CDK deployment for that site
 
-This repo serves as a **portfolio reference** and **knowledge base** for demonstrating:
-- How problems were approached across analytics, marketing automation, and data engineering
-- The thought process behind building scalable, data-driven solutions
-- Evolution of hands-on work from early desktop scripts to full-stack cloud deployments
+The first local CRM shell has not been implemented yet. Its scope and
+architecture will be established through working code and documented decisions
+as the project develops.
 
----
+## Public site
 
-## Structure
+The React source is in [`apps/toolkit-site`](apps/toolkit-site).
 
-The repo is organized by purpose and language:
+```sh
+cd apps/toolkit-site
+npm ci
+npm run dev
+```
 
-- `/AI-ML` – Machine learning experiments, keyword tools, embedding search, etc.
-- `/Python` – ETL jobs, keyword crawlers, address standardization, utilities
-- `/SQL` – Oracle/PostgreSQL queries, procedures, and data prep logic
-- `/SAS` – Legacy SAS programs used in marketing response models and segmentation
-- `/Excel` – Workbooks with marketing models, forecasting logic, data crunching
-- `/ReactApps` – Frontend prototypes using React + Flask backend
+## Site infrastructure
 
----
+The toolkit-only deployment is in [`deploy/toolkit-site`](deploy/toolkit-site).
+It imports the existing `thelenders.app` Route 53 hosted zone but owns only the
+resources for `toolkit.thelenders.app`.
 
-## Featured Examples
+See [`deploy/toolkit-site/README.md`](deploy/toolkit-site/README.md) before
+reviewing or deploying infrastructure changes.
 
-- `keyword_analysis.py` – Extracts high-performing keywords using multiple LLM APIs (OpenAI, Gemini, Claude)
-- `address_standardization.py` – Cleans and geocodes addresses via AWS Location Service
-- `ai-assisted-campaign-planner/` – Flask app to plan digital campaigns from Google Sheets prompts
+## Status
 
----
-
-## Disclaimer
-
-This is a public repository. All credentials or secrets (e.g., API keys) have been removed or masked. If you fork or reuse code, ensure you securely manage your own environment variables and secrets.
-
----
+This project is pre-production. Do not use it with borrower, lender, credential,
+or other confidential data.
 
 ## License
 
-This repository is shared under the [MIT License](LICENSE). Feel free to use, adapt, or build upon the code with attribution.
-
----
-
-## Author
-
-**Anupam Tripathi**  
-Founder – Trinetra LLC  
-Builder of [DigitalAnalytics.app](https://digitalanalytics.app)  
-Reach me on [LinkedIn](https://www.linkedin.com/in/anupamtripathi/)
+Licensed under the [MIT License](LICENSE).

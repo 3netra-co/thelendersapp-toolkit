@@ -1,23 +1,31 @@
-# Ignore virtual environments
-venv/
+.DS_Store
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.log
+*.tmp
+*.sqlite*
+*.db
 
-# Ignore Python cache files
+.venv/
+venv/
+node_modules/
+dist/
+build/
+coverage/
 __pycache__/
 *.py[cod]
 
-# Ignore system files
-.DS_Store
+.idea/
+.vscode/
+.terraform/
+*.tfstate*
 
-# Ignore browser binaries downloaded by Playwright
-ms-playwright/
-
-# Ignore logs and temporary files
-*.log
-*.tmp
-
-# Allow sample output CSVs to be tracked
-!sample_output/*.csv
-
-# If you had an 'output/' directory for actual runs and don't want to track those:
-output/
+artifacts/
+data/private/
+data/customer/

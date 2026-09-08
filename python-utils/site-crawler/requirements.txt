@@ -1,5 +1,0 @@
-beautifulsoup4==4.13.4
-nltk==3.8.1
-numpy==2.2.6
-pandas==2.2.3
-playwright==1.52.0
