@@ -1,0 +1,14 @@
+services:
+  crm:
+    build:
+      context: ../../apps/crm
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      WORKSPACE_ID: local-workspace
+    volumes:
+      - crm-data:/data
+    restart: unless-stopped
+
+volumes:
+  crm-data:
