@@ -7,7 +7,7 @@ import azure.functions as func
 def main(_: func.HttpRequest) -> func.HttpResponse:
     """Report API readiness without exposing configuration or customer data."""
     payload = {
-        "service": "thelendersapp-workspace-api",
+        "service": "thelendersapp-crm-api",
         "status": "ok",
         "checkedAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     }

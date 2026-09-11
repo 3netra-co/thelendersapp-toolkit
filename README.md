@@ -1,38 +1,35 @@
 # The Lenders App Toolkit
 
-The Lenders App Toolkit is an early-stage open-source mortgage workspace. The
-goal is a customer-owned platform that can grow from CRM into POS and LOS
-capabilities without locking its data or workflows to The Lenders App.
+The Lenders App Toolkit is an early-stage collection of customer-owned,
+open-source mortgage applications. CRM is the first application; POS, LOS, and
+other offerings can be added as independently installable products.
 
 ## Repository map
 
 | Path | Purpose |
 | --- | --- |
-| [`apps/workspace`](apps/workspace) | Installable customer PWA for CRM, future POS, and future LOS experiences |
-| [`services/workspace-api`](services/workspace-api) | Customer-owned Python API, background jobs, workflows, and integration adapters |
-| [`infra/azure/customer`](infra/azure/customer) | Reusable Azure reference deployment installed into a customer's subscription |
+| [`apps/crm`](apps/crm) | CRM PWA, Python API, Azure infrastructure, tests, and product documentation |
 | [`packages/contracts`](packages/contracts) | Cloud-neutral event and provider contracts |
 | [`docs`](docs) | Architecture decisions, delivery roadmap, and contributor guidance |
 
-The workspace uses one modular backend. CRM, POS, LOS, communications,
-automation, and integrations are domain modules—not separate APIs by default.
-An independently deployed service is introduced only for a demonstrated
-security, reliability, scaling, or regulatory boundary.
+Each application owns its runtime, storage, authorization, deployment, and
+release lifecycle. Applications integrate through versioned APIs and events;
+they do not read one another's databases directly.
 
 The curated catalog at [toolkit.thelenders.app](https://toolkit.thelenders.app)
 is operated separately. This public repository contains the open-source
 offerings and customer-owned deployment code linked from that catalog.
 
-## Run the workspace PWA
+## Run the CRM PWA
 
 ```sh
-cd apps/workspace
+cd apps/crm/web
 npm ci
 npm run dev
 ```
 
 The PWA proxies `/api` to a local Azure Functions host on port 7071. See
-[`services/workspace-api/README.md`](services/workspace-api/README.md) for the
+[`apps/crm/api/README.md`](apps/crm/api/README.md) for the
 backend instructions.
 
 ## Architecture

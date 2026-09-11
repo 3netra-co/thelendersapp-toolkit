@@ -3,7 +3,7 @@
 Status: implementation sequence for the first customer-owned installation test
 
 The public repository supplies the versioned application and deployment
-artifacts used to create a customer-owned Azure workspace. A separately
+artifacts used to create a customer-owned Azure CRM. A separately
 operated catalog may explain an offering and link to its deployment flow, but
 it is not part of this repository or the customer's runtime data path.
 
@@ -28,7 +28,7 @@ be treated as complete while a prerequisite slice is only manually configured.
 - anonymous, data-free health endpoint
 - configuration validation and unit tests
 - local Functions execution instructions
-- versioned deployment packaging for the customer workspace Function App
+- versioned deployment packaging for the customer CRM Function App
 
 Exit test: the local and deployed `/api/v1/health` endpoints report healthy.
 

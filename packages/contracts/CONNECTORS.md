@@ -27,7 +27,7 @@ Every connector must publish:
 Connectors receive provider payloads and produce the shared event envelope.
 They preserve the original payload and a transformation report alongside the
 normalized event. They do not write directly to projection tables or bypass
-workspace authorization, audit, consent, and workflow controls.
+the installed application's authorization, audit, consent, and workflow controls.
 
 ## AI-assisted connector development
 

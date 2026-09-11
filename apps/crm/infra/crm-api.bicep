@@ -1,4 +1,4 @@
-@description('Azure region for the customer-owned workspace API resources.')
+@description('Azure region for the customer-owned CRM API resources.')
 param location string = resourceGroup().location
 
 @description('Durable environment name used for tags and resource names.')
@@ -13,14 +13,14 @@ param environmentName string = 'production'
 @maxLength(20)
 param installationName string
 
-@description('Globally unique customer workspace Function App name.')
-param functionAppName string = 'func-${installationName}-workspace-${environmentName}-${take(uniqueString(subscription().id, resourceGroup().id), 6)}'
+@description('Globally unique customer CRM Function App name.')
+param functionAppName string = 'func-${installationName}-crm-${environmentName}-${take(uniqueString(subscription().id, resourceGroup().id), 6)}'
 
-@description('Globally unique workspace runtime and deployment storage account name.')
-param storageAccountName string = 'st${take(replace(installationName, '-', ''), 8)}data${take(uniqueString(subscription().id, resourceGroup().id), 8)}'
+@description('Globally unique CRM runtime and deployment storage account name.')
+param storageAccountName string = 'st${take(replace(installationName, '-', ''), 8)}crm${take(uniqueString(subscription().id, resourceGroup().id), 8)}'
 
-@description('Flex Consumption plan for the customer workspace API.')
-param hostingPlanName string = 'plan-${installationName}-workspace-functions-${environmentName}'
+@description('Flex Consumption plan for the customer CRM API.')
+param hostingPlanName string = 'plan-${installationName}-crm-functions-${environmentName}'
 
 var deploymentContainerName = 'app-package-${take(functionAppName, 32)}'
 var storageBlobDataOwnerRoleId = subscriptionResourceId(
@@ -39,7 +39,7 @@ var tags = {
   product: 'thelendersapp-toolkit'
   environment: environmentName
   'managed-by': 'bicep'
-  purpose: 'customer-workspace-api'
+  purpose: 'customer-crm-api'
   installation: installationName
 }
 

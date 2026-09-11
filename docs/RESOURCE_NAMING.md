@@ -8,9 +8,9 @@ business purpose.
 
 | Name | Meaning |
 | --- | --- |
-| workspace | Customer-facing PWA containing CRM and future POS/LOS experiences |
-| workspace API | Customer-owned backend for the unified workspace |
-| customer infrastructure | Resources installed into a customer's cloud account |
+| application | Independently installed product such as CRM, POS, or LOS |
+| CRM API | Customer-owned backend for the CRM application |
+| customer infrastructure | Resources installed into a customer's cloud account for one application |
 | connector | Versioned adapter for an external system such as ARIVE or Encompass |
 
 ## Azure convention
@@ -24,9 +24,9 @@ Azure resource names use this order:
 Customer deployments use the customer's installation name:
 
 ```text
-Resource group:    rg-<installation>-workspace-production
-Static Web App:    stapp-<installation>-workspace-production
-Function App:      func-<installation>-workspace-production
+Resource group:    rg-<installation>-crm-production
+Static Web App:    stapp-<installation>-crm-production
+Function App:      func-<installation>-crm-production
 Storage account:   st<installation><generated-suffix>
 ```
 

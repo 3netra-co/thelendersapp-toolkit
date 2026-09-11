@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  customer-workspace:
-    name: Customer workspace
+  crm-web:
+    name: CRM web
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -21,13 +21,13 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: apps/workspace/package-lock.json
-      - name: Check and build customer workspace
-        working-directory: apps/workspace
+          cache-dependency-path: apps/crm/web/package-lock.json
+      - name: Check and build CRM web
+        working-directory: apps/crm/web
         run: npm ci && npm run typecheck && npm run build
 
-  workspace-api:
-    name: Workspace API
+  crm-api:
+    name: CRM API
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -37,7 +37,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run unit tests
-        working-directory: services/workspace-api
+        working-directory: apps/crm/api
         run: PYTHONPATH=. python -m unittest discover -s tests -v
 
   azure-infrastructure:
@@ -47,4 +47,4 @@ jobs:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Compile Bicep templates
-        run: az bicep build --file infra/azure/customer/workspace-api.bicep --stdout > /dev/null
+        run: az bicep build --file apps/crm/infra/crm-api.bicep --stdout > /dev/null

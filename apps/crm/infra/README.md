@@ -1,10 +1,10 @@
-# Customer Azure infrastructure
+# CRM Azure infrastructure
 
-This directory contains the Azure reference implementation installed into a
-customer's subscription. These resources run the customer workspace and remain
-under the customer's ownership and billing account.
+This directory contains the CRM Azure reference implementation installed into
+a customer's subscription. These resources run only the CRM and remain under
+the customer's ownership and billing account.
 
-The current Bicep slice creates the Python workspace API foundation. It creates
+The current Bicep slice creates the Python CRM API foundation. It creates
 only customer-owned resources and must not reference infrastructure operated by
 The Lenders App.
 
@@ -15,8 +15,8 @@ customer's organization or deployment name. For example, an installation named
 `sample-brokerage` produces resources such as:
 
 ```text
-func-sample-brokerage-workspace-production-<suffix>
-plan-sample-brokerage-workspace-functions-production
+func-sample-brokerage-crm-production-<suffix>
+plan-sample-brokerage-crm-functions-production
 ```
 
 Azure storage-account restrictions require a shorter alphanumeric form with a
@@ -31,17 +31,17 @@ module:
 ```sh
 az deployment group validate \
   --resource-group <customer-resource-group> \
-  --template-file infra/azure/customer/workspace-api.bicep \
+  --template-file apps/crm/infra/crm-api.bicep \
   --parameters installationName=<installation-name>
 
 az deployment group what-if \
   --resource-group <customer-resource-group> \
-  --template-file infra/azure/customer/workspace-api.bicep \
+  --template-file apps/crm/infra/crm-api.bicep \
   --parameters installationName=<installation-name>
 ```
 
-The complete customer deployment will later create the resource group, PWA,
-workspace API, storage services, identities, roles, queues, and cost controls
+The complete CRM deployment will later create the resource group, PWA, CRM API,
+storage services, identities, roles, queues, and cost controls
 through a subscription-scope entry point.
 
 ## Data-removal boundary

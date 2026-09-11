@@ -7,7 +7,7 @@
   "required": [
     "schemaVersion",
     "eventId",
-    "workspaceId",
+    "installationId",
     "entityType",
     "entityId",
     "eventType",
@@ -18,7 +18,7 @@
   "properties": {
     "schemaVersion": { "type": "integer", "minimum": 1 },
     "eventId": { "type": "string", "minLength": 1 },
-    "workspaceId": { "type": "string", "minLength": 1 },
+    "installationId": { "type": "string", "minLength": 1 },
     "entityType": { "type": "string", "minLength": 1 },
     "entityId": { "type": "string", "minLength": 1 },
     "eventType": { "type": "string", "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$" },

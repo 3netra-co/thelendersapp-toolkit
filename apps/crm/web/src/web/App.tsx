@@ -92,7 +92,7 @@ export function App() {
     <main>
       <header>
         <p className="eyebrow">THE LENDERS APP TOOLKIT</p>
-        <h1>Workspace foundation</h1>
+        <h1>CRM foundation</h1>
         <p className="lede">The first CRM slice for contacts, durable records, and application events.</p>
         {installPrompt && (
           <button className="install" type="button" onClick={installApp}>Install this app</button>

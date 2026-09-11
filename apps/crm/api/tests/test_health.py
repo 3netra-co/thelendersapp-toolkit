@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from unittest import TestCase
 
-from workspace_api.health import health_payload
+from crm_api.health import health_payload
 
 
 class HealthPayloadTests(TestCase):
@@ -11,7 +11,7 @@ class HealthPayloadTests(TestCase):
         self.assertEqual(
             health_payload(now),
             {
-                "service": "thelendersapp-workspace-api",
+                "service": "thelendersapp-crm-api",
                 "status": "ok",
                 "checkedAt": "2026-09-09T14:30:00Z",
             },

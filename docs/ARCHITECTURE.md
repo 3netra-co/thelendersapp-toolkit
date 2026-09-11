@@ -64,30 +64,28 @@ without requesting it again or losing fields that were unknown at ingestion.
 An adapter must be idempotent. Replaying the same source event cannot create a
 second borrower, contact, opportunity, loan, communication, or workflow action.
 
-## Modular workspace backend
+## Independent application boundary
 
-CRM, POS, and LOS are product domains inside one customer-owned workspace API.
-They share organization, staff, authorization, party, document, audit, event,
-workflow, and integration capabilities. Separate top-level APIs would duplicate
-those controls and make cross-domain workflows harder to reason about.
+CRM, POS, and LOS are independently installable products. Each owns its API,
+runtime, storage, identity configuration, permissions, deployment, version, and
+removal lifecycle. Installing CRM must not provision POS or LOS resources.
 
-The Python service grows through explicit modules:
+The CRM Python service grows through explicit CRM modules:
 
 ```text
-workspace_api/
+crm_api/
 ├── identity/
 ├── organizations/
 ├── crm/
-├── pos/
-├── los/
 ├── communications/
 ├── automation/
 └── integrations/
 ```
 
-A module becomes an independently deployed service only after a documented
-architecture decision identifies a real security, scaling, reliability, or
-regulatory boundary.
+Shared schemas define interoperability without creating a shared database.
+When CRM connects to a POS or LOS, it uses the other application's documented,
+versioned API or event contract. No application reads or writes another
+application's storage directly.
 
 ## Integration and AI-assisted development
 
@@ -124,8 +122,8 @@ that arrive more than once.
 
 ## Reference Azure lifecycle
 
-Any catalog or deployment entry point and each customer workspace are separate
-deployments. Customer infrastructure is encoded in public Bicep before
+Any catalog or deployment entry point and each customer application are
+separate deployments. Customer infrastructure is encoded in public Bicep before
 application capabilities are added.
 Identity, organization, branch, and staff onboarding are verified before
 contacts are added to the cloud application.

@@ -1,7 +1,7 @@
 {
-  "name": "The Lenders App Workspace",
-  "short_name": "TLA Workspace",
-  "description": "Customer-owned mortgage CRM, POS, and LOS workspace",
+  "name": "The Lenders App CRM",
+  "short_name": "TLA CRM",
+  "description": "Customer-owned mortgage CRM",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

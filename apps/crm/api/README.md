@@ -1,12 +1,11 @@
-# Customer workspace API
+# CRM API
 
-This customer-owned Python service is the backend for the unified Toolkit
-workspace. CRM, POS, LOS, communications, automation, and integrations are
-modules within this service. They share identity, authorization, audit, event,
-and data contracts rather than exposing unrelated APIs.
+This customer-owned Python service is the backend for the Toolkit CRM. It owns
+CRM contacts, leads, opportunities, communications, automation, authorization,
+audit, and CRM-specific integrations. It does not own POS or LOS data.
 
-A module may become an independently deployed service only when security,
-reliability, scaling, or regulatory boundaries justify that separation.
+Other products connect through versioned APIs and events rather than reading
+this application's storage directly.
 
 ## Runtime
 
