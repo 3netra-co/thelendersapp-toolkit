@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thelenders.app/schemas/event-envelope.schema.json",
+  "title": "The Lenders App Toolkit event envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "workspaceId",
+    "entityType",
+    "entityId",
+    "eventType",
+    "occurredAt",
+    "source",
+    "data"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "eventId": { "type": "string", "minLength": 1 },
+    "workspaceId": { "type": "string", "minLength": 1 },
+    "entityType": { "type": "string", "minLength": 1 },
+    "entityId": { "type": "string", "minLength": 1 },
+    "eventType": { "type": "string", "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "actorId": { "type": ["string", "null"] },
+    "correlationId": { "type": ["string", "null"] },
+    "causationId": { "type": ["string", "null"] },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system"],
+      "properties": {
+        "system": { "type": "string", "minLength": 1 },
+        "tenant": { "type": ["string", "null"] },
+        "resourceType": { "type": ["string", "null"] },
+        "resourceId": { "type": ["string", "null"] },
+        "adapter": { "type": ["string", "null"] },
+        "adapterVersion": { "type": ["string", "null"] }
+      }
+    },
+    "data": { "type": "object" },
+    "extensions": { "type": "object" }
+  }
+}
