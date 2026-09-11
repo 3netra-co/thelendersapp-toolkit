@@ -8,10 +8,8 @@ capabilities without locking its data or workflows to The Lenders App.
 
 | Path | Purpose |
 | --- | --- |
-| [`apps/installer-portal`](apps/installer-portal) | Public installation and contributor portal hosted at [toolkit.thelenders.app](https://toolkit.thelenders.app) |
 | [`apps/workspace`](apps/workspace) | Installable customer PWA for CRM, future POS, and future LOS experiences |
 | [`services/workspace-api`](services/workspace-api) | Customer-owned Python API, background jobs, workflows, and integration adapters |
-| [`infra/azure/platform`](infra/azure/platform) | Azure infrastructure for the public installer portal operated by The Lenders App |
 | [`infra/azure/customer`](infra/azure/customer) | Reusable Azure reference deployment installed into a customer's subscription |
 | [`packages/contracts`](packages/contracts) | Cloud-neutral event and provider contracts |
 | [`docs`](docs) | Architecture decisions, delivery roadmap, and contributor guidance |
@@ -21,13 +19,9 @@ automation, and integrations are domain modules—not separate APIs by default.
 An independently deployed service is introduced only for a demonstrated
 security, reliability, scaling, or regulatory boundary.
 
-## Run the installer portal
-
-```sh
-cd apps/installer-portal
-npm ci
-npm run dev
-```
+The curated catalog at [toolkit.thelenders.app](https://toolkit.thelenders.app)
+is operated separately. This public repository contains the open-source
+offerings and customer-owned deployment code linked from that catalog.
 
 ## Run the workspace PWA
 
@@ -48,7 +42,6 @@ backend instructions.
 - [Cloud provider capability contract](packages/contracts/contracts/CLOUD_PROVIDER.md)
 - [Connector contract](packages/contracts/CONNECTORS.md)
 - [Resource naming](docs/RESOURCE_NAMING.md)
-- [Deployment history](docs/DEPLOYMENT_HISTORY.md)
 
 ## Status
 

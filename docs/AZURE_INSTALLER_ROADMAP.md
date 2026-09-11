@@ -1,15 +1,16 @@
-# Azure installer delivery roadmap
+# Azure customer deployment roadmap
 
 Status: implementation sequence for the first customer-owned installation test
 
-The public installer at `toolkit.thelenders.app` is a bootstrap portal. It
-previews and starts a deployment in the administrator's Azure account, then
-returns the customer's Azure Static Web Apps URL. It is not in the runtime data
-path and does not host or operate the customer's CRM.
+The public repository supplies the versioned application and deployment
+artifacts used to create a customer-owned Azure workspace. A separately
+operated catalog may explain an offering and link to its deployment flow, but
+it is not part of this repository or the customer's runtime data path.
 
 ## Technology boundary
 
-- React and TypeScript provide the installer and customer PWA interfaces.
+- React and TypeScript provide the customer PWA interface and any public
+  deployment-review UI contributed with the offering.
 - Python provides the Azure Functions API, event handlers, projection workers,
   scheduled jobs, and future integration adapters.
 - Bicep defines customer-owned Azure and supported Microsoft Entra resources.
@@ -77,18 +78,19 @@ second owner profile after refresh, retry, or concurrent requests.
 Exit test: a second user activates on another device and can perform only the
 operations granted by their roles.
 
-### Slice 6: Browser deployment portal
+### Slice 6: Guided deployment handoff
 
-- Microsoft sign-in and tenant/subscription selection
+- a versioned Microsoft deployment link generated from public release artifacts
+- Microsoft sign-in and tenant/subscription selection on Microsoft-owned pages
 - region, organization name, deployment name, and cost/resource confirmation
 - permission preflight before billable resources
 - deployment progress, retry, and actionable failures
 - final Azure Static Web Apps URL and PWA installation guidance
 - versioned release selection rather than deployment from a moving branch
 
-Exit test: a new administrator can start at `toolkit.thelenders.app`, deploy a
-customer-owned environment, and onboard a second user without manual Azure API
-configuration.
+Exit test: a new administrator can follow the published deployment link, deploy
+a customer-owned environment, and onboard a second user without manual Azure
+API configuration.
 
 ### Slice 7: Clean contributor test
 

@@ -124,8 +124,9 @@ that arrive more than once.
 
 ## Reference Azure lifecycle
 
-The public installer and each customer workspace are separate deployments.
-Infrastructure is encoded in Bicep before application capabilities are added.
+Any catalog or deployment entry point and each customer workspace are separate
+deployments. Customer infrastructure is encoded in public Bicep before
+application capabilities are added.
 Identity, organization, branch, and staff onboarding are verified before
 contacts are added to the cloud application.
 

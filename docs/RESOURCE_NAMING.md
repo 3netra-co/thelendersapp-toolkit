@@ -8,10 +8,8 @@ business purpose.
 
 | Name | Meaning |
 | --- | --- |
-| installer portal | Public site that explains and starts an installation |
 | workspace | Customer-facing PWA containing CRM and future POS/LOS experiences |
 | workspace API | Customer-owned backend for the unified workspace |
-| platform infrastructure | Resources operated by The Lenders App for the installer |
 | customer infrastructure | Resources installed into a customer's cloud account |
 | connector | Versioned adapter for an external system such as ARIVE or Encompass |
 
@@ -21,13 +19,6 @@ Azure resource names use this order:
 
 ```text
 <resource-type>-<product>-<purpose>-<environment>[-<region>]
-```
-
-The maintained platform uses:
-
-```text
-Resource group:    rg-thelendersapp-toolkit-platform-production
-Static Web App:    stapp-thelendersapp-installer-production
 ```
 
 Customer deployments use the customer's installation name:

@@ -4,19 +4,19 @@ This directory contains the Azure reference implementation installed into a
 customer's subscription. These resources run the customer workspace and remain
 under the customer's ownership and billing account.
 
-The current Bicep slice creates the Python workspace API foundation. It does
-not create resources operated by The Lenders App and must not reference the
-public installer portal's resource group.
+The current Bicep slice creates the Python workspace API foundation. It creates
+only customer-owned resources and must not reference infrastructure operated by
+The Lenders App.
 
 ## Naming
 
 The installer supplies a meaningful lowercase `installationName`, normally the
 customer's organization or deployment name. For example, an installation named
-`colonial-mortgage` produces resources such as:
+`sample-brokerage` produces resources such as:
 
 ```text
-func-colonial-mortgage-workspace-production-<suffix>
-plan-colonial-mortgage-workspace-functions-production
+func-sample-brokerage-workspace-production-<suffix>
+plan-sample-brokerage-workspace-functions-production
 ```
 
 Azure storage-account restrictions require a shorter alphanumeric form with a
