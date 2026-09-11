@@ -1,51 +1,63 @@
 # The Lenders App Toolkit
 
-The Lenders App Toolkit is an open-source project in its earliest development
-stage.
+The Lenders App Toolkit is an early-stage open-source mortgage workspace. The
+goal is a customer-owned platform that can grow from CRM into POS and LOS
+capabilities without locking its data or workflows to The Lenders App.
 
-The repository currently contains:
+## Repository map
 
-- The public placeholder site at [toolkit.thelenders.app](https://toolkit.thelenders.app)
-- The isolated AWS CDK deployment for that site
-- A containerized local CRM test application
+| Path | Purpose |
+| --- | --- |
+| [`apps/installer-portal`](apps/installer-portal) | Public installation and contributor portal hosted at [toolkit.thelenders.app](https://toolkit.thelenders.app) |
+| [`apps/workspace`](apps/workspace) | Installable customer PWA for CRM, future POS, and future LOS experiences |
+| [`services/workspace-api`](services/workspace-api) | Customer-owned Python API, background jobs, workflows, and integration adapters |
+| [`infra/azure/platform`](infra/azure/platform) | Azure infrastructure for the public installer portal operated by The Lenders App |
+| [`infra/azure/customer`](infra/azure/customer) | Reusable Azure reference deployment installed into a customer's subscription |
+| [`packages/contracts`](packages/contracts) | Cloud-neutral event and provider contracts |
+| [`docs`](docs) | Architecture decisions, delivery roadmap, and contributor guidance |
 
-## Local CRM test
+The workspace uses one modular backend. CRM, POS, LOS, communications,
+automation, and integrations are domain modules—not separate APIs by default.
+An independently deployed service is introduced only for a demonstrated
+security, reliability, scaling, or regulatory boundary.
 
-The first CRM shell is in [`apps/crm`](apps/crm). It runs locally in Docker with
-a React interface, Node.js API, SQLite persistence, and a transactional event
-outbox.
-
-Follow [`docs/LOCAL_TEST_APP.md`](docs/LOCAL_TEST_APP.md) to start it, test data
-persistence, develop locally, or reset its test data.
-
-The proposed Azure-first PWA architecture, including POS/LOS portability rules,
-is recorded in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Alternative cloud
-implementations should follow the
-[`cloud provider capability contract`](docs/contracts/CLOUD_PROVIDER.md).
-
-## Public site
-
-The React source is in [`apps/toolkit-site`](apps/toolkit-site).
+## Run the installer portal
 
 ```sh
-cd apps/toolkit-site
+cd apps/installer-portal
 npm ci
 npm run dev
 ```
 
-## Site infrastructure
+## Run the workspace PWA
 
-The toolkit-only deployment is in [`deploy/toolkit-site`](deploy/toolkit-site).
-It imports the existing `thelenders.app` Route 53 hosted zone but owns only the
-resources for `toolkit.thelenders.app`.
+```sh
+cd apps/workspace
+npm ci
+npm run dev
+```
 
-See [`deploy/toolkit-site/README.md`](deploy/toolkit-site/README.md) before
-reviewing or deploying infrastructure changes.
+The PWA proxies `/api` to a local Azure Functions host on port 7071. See
+[`services/workspace-api/README.md`](services/workspace-api/README.md) for the
+backend instructions.
+
+## Architecture
+
+- [Architecture direction](docs/ARCHITECTURE.md)
+- [Azure delivery roadmap](docs/AZURE_INSTALLER_ROADMAP.md)
+- [Cloud provider capability contract](packages/contracts/contracts/CLOUD_PROVIDER.md)
+- [Connector contract](packages/contracts/CONNECTORS.md)
+- [Resource naming](docs/RESOURCE_NAMING.md)
+- [Deployment history](docs/DEPLOYMENT_HISTORY.md)
 
 ## Status
 
-This project is pre-production. Do not use it with borrower, lender, credential,
-or other confidential data.
+This project is pre-production. Do not use it with borrower, lender,
+credential, or other confidential data.
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[security policy](SECURITY.md) before submitting a change or vulnerability
+report.
 
 ## License
 

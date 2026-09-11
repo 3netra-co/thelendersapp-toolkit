@@ -43,8 +43,8 @@ V1 separates authoritative history from query projections:
 4. Azure Functions validate commands, write records, update projections, run
    schedules, and invoke integrations.
 
-The local reference app can use SQLite to emulate these contracts. SQLite is
-not the Azure production system of record.
+The earlier Docker/SQLite proof has been removed. Local development uses the
+same Python API boundaries and Azure storage contracts as the cloud application.
 
 ## POS and LOS integration boundary
 
@@ -64,6 +64,44 @@ without requesting it again or losing fields that were unknown at ingestion.
 An adapter must be idempotent. Replaying the same source event cannot create a
 second borrower, contact, opportunity, loan, communication, or workflow action.
 
+## Modular workspace backend
+
+CRM, POS, and LOS are product domains inside one customer-owned workspace API.
+They share organization, staff, authorization, party, document, audit, event,
+workflow, and integration capabilities. Separate top-level APIs would duplicate
+those controls and make cross-domain workflows harder to reason about.
+
+The Python service grows through explicit modules:
+
+```text
+workspace_api/
+├── identity/
+├── organizations/
+├── crm/
+├── pos/
+├── los/
+├── communications/
+├── automation/
+└── integrations/
+```
+
+A module becomes an independently deployed service only after a documented
+architecture decision identifies a real security, scaling, reliability, or
+regulatory boundary.
+
+## Integration and AI-assisted development
+
+ARIVE, Encompass, Polly, Salesforce, lead sources, and communication providers
+connect through versioned adapters. An adapter declares its authentication,
+permissions, supported operations, webhook behavior, field mappings, rate
+limits, and data-classification impact.
+
+AI tools such as OpenAI or Azure AI Foundry may help generate mappings, adapter
+scaffolding, tests, and setup guidance. Generated code receives the same review,
+least-privilege checks, contract tests, fixture tests, and secret-scanning as a
+human contribution. AI output never receives production credentials or bypasses
+the stable connector and event contracts.
+
 ## Identity and correlation
 
 Toolkit identifiers are stable and never derived solely from a provider's ID.
@@ -77,7 +115,7 @@ review item rather than silently merging records.
 ## Event contract
 
 All providers use the versioned envelope defined in
-[`schemas/event-envelope.schema.json`](../schemas/event-envelope.schema.json).
+[`event-envelope.schema.json`](../packages/contracts/schemas/event-envelope.schema.json).
 The envelope separates stable routing metadata from provider or domain data.
 
 Events are append-only. Corrections are represented by later events rather than
@@ -86,9 +124,10 @@ that arrive more than once.
 
 ## Reference Azure lifecycle
 
-The initial proof is deployed manually into a dedicated test resource group.
-Only after the contact flow works and actual cost is observed is the deployment
-encoded in Bicep and tested from a clean subscription.
+The public installer and each customer workspace are separate deployments.
+Infrastructure is encoded in Bicep before application capabilities are added.
+Identity, organization, branch, and staff onboarding are verified before
+contacts are added to the cloud application.
 
 The intended lifecycle is:
 
@@ -102,17 +141,19 @@ region, names, data-deletion boundary, and cost controls have been reviewed.
 
 ## First cloud proof
 
-The smallest acceptable vertical slice will:
+The first acceptable vertical slice will:
 
-1. authenticate one test user;
-2. create a contact from the PWA;
-3. store an immutable event in Blob Storage;
-4. project it through Queue Storage and a Function into Table Storage;
-5. display the projection in the PWA;
-6. update the contact without deleting its earlier version;
-7. rebuild the projection from Blob Storage;
-8. execute a scheduled function while the PWA is closed; and
-9. report the resources and measured cost of the test.
+1. deploy a Python Functions API and verify its health;
+2. authenticate one administrator through customer-owned Entra
+   registrations;
+3. create an organization, default branch, staff profile, identity link, and
+   owner membership exactly once;
+4. invite and activate a second staff user on another device;
+5. enforce Owner, Admin, CRM Writer, and CRM Reader permissions in the API; and
+6. report the resources and measured cost of the deployment exercise.
+
+The implementation order and exit tests are recorded in
+[`AZURE_INSTALLER_ROADMAP.md`](./AZURE_INSTALLER_ROADMAP.md).
 
 Custom domains, ACS, production migrations, and full POS/LOS adapters are not
 required for this proof, but the proof must use the same contracts they will
