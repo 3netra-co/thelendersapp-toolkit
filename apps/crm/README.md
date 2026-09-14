@@ -13,6 +13,10 @@ or LOS.
 | [`api`](api) | Python Azure Functions API and tests |
 | [`infra`](infra) | Customer-owned Azure reference infrastructure |
 
+The Azure entry point returns separate CRM application and API URLs. The web
+application and API remain one CRM product even though Azure hosts them as
+separate resources.
+
 ## Local checks
 
 ```sh
@@ -25,7 +29,7 @@ cd ../api
 PYTHONPATH=. python3 -m unittest discover -s tests -v
 
 cd ../../..
-az bicep build --file apps/crm/infra/crm-api.bicep --stdout > /dev/null
+az bicep build --file apps/crm/infra/main.bicep --stdout > /dev/null
 ```
 
 The CRM is pre-production. Do not enter confidential borrower, lender,

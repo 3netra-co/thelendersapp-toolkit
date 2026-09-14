@@ -47,4 +47,4 @@ jobs:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Compile Bicep templates
-        run: az bicep build --file apps/crm/infra/crm-api.bicep --stdout > /dev/null
+        run: az bicep build --file apps/crm/infra/main.bicep --stdout > /dev/null

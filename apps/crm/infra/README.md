@@ -4,9 +4,10 @@ This directory contains the CRM Azure reference implementation installed into
 a customer's subscription. These resources run only the CRM and remain under
 the customer's ownership and billing account.
 
-The current Bicep slice creates the Python CRM API foundation. It creates
-only customer-owned resources and must not reference infrastructure operated by
-The Lenders App.
+`main.bicep` is the subscription-level CRM deployment entry point. It creates a
+customer-owned CRM resource group and deploys the current Python API and storage
+foundation into it. It does not reference infrastructure operated by The
+Lenders App.
 
 ## Naming
 
@@ -17,6 +18,7 @@ customer's organization or deployment name. For example, an installation named
 ```text
 func-sample-brokerage-crm-production-<suffix>
 plan-sample-brokerage-crm-functions-production
+stapp-sample-brokerage-crm-production-<suffix>
 ```
 
 Azure storage-account restrictions require a shorter alphanumeric form with a
@@ -25,24 +27,28 @@ deterministic uniqueness suffix. See
 
 ## Validate and preview
 
-The destination resource group must already exist for this resource-group
-module:
+Validate and preview the complete subscription-level entry point:
 
 ```sh
-az deployment group validate \
-  --resource-group <customer-resource-group> \
-  --template-file apps/crm/infra/crm-api.bicep \
-  --parameters installationName=<installation-name>
+az deployment sub validate \
+  --location <deployment-location> \
+  --template-file apps/crm/infra/main.bicep \
+  --parameters location=<resource-location> installationName=<installation-name>
 
-az deployment group what-if \
-  --resource-group <customer-resource-group> \
-  --template-file apps/crm/infra/crm-api.bicep \
-  --parameters installationName=<installation-name>
+az deployment sub what-if \
+  --location <deployment-location> \
+  --template-file apps/crm/infra/main.bicep \
+  --parameters location=<resource-location> installationName=<installation-name>
 ```
 
-The complete CRM deployment will later create the resource group, PWA, CRM API,
-storage services, identities, roles, queues, and cost controls
-through a subscription-scope entry point.
+The current entry point creates the resource group, CRM Static Web App, CRM API
+foundation, storage, managed identity, and storage role assignments. It returns
+the generated CRM application URL and API URL as deployment outputs.
+
+Application-code publication, identity registration, and cost controls remain
+later slices and must be present before this template is advertised as a
+complete CRM install. Creating the Static Web App alone does not publish the
+compiled PWA into it.
 
 ## Data-removal boundary
 
