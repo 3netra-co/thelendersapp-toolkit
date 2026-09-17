@@ -22,7 +22,26 @@ param storageAccountName string = 'st${take(replace(installationName, '-', ''), 
 @description('Flex Consumption plan for the customer CRM API.')
 param hostingPlanName string = 'plan-${installationName}-crm-functions-${environmentName}'
 
+@description('Log Analytics workspace used for bounded CRM operational diagnostics.')
+param logAnalyticsWorkspaceName string = 'log-${installationName}-crm-${environmentName}'
+
+@description('Application Insights resource used for Function failures and performance telemetry.')
+param applicationInsightsName string = 'appi-${installationName}-crm-${environmentName}'
+
 var deploymentContainerName = 'app-package-${take(functionAppName, 32)}'
+var domainEventsContainerName = 'domain-events'
+var sourcePayloadsContainerName = 'source-payloads'
+var documentsContainerName = 'documents'
+var projectionQueueName = 'projection-events'
+var workflowQueueName = 'workflow-events'
+var projectionTableNames = [
+  'Organizations'
+  'Branches'
+  'StaffProfiles'
+  'IdentityLinks'
+  'Memberships'
+  'LoginAudit'
+]
 var storageBlobDataOwnerRoleId = subscriptionResourceId(
   'Microsoft.Authorization/roleDefinitions',
   'b7e6dc6d-f1e8-4753-8033-0f276bb0955b'
@@ -85,6 +104,55 @@ resource deploymentContainer 'Microsoft.Storage/storageAccounts/blobServices/con
   }
 }
 
+resource domainEventsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: domainEventsContainerName
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource sourcePayloadsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: sourcePayloadsContainerName
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource documentsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: documentsContainerName
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource queueService 'Microsoft.Storage/storageAccounts/queueServices@2023-05-01' = {
+  parent: runtimeStorage
+  name: 'default'
+}
+
+resource projectionQueue 'Microsoft.Storage/storageAccounts/queueServices/queues@2023-05-01' = {
+  parent: queueService
+  name: projectionQueueName
+}
+
+resource workflowQueue 'Microsoft.Storage/storageAccounts/queueServices/queues@2023-05-01' = {
+  parent: queueService
+  name: workflowQueueName
+}
+
+resource tableService 'Microsoft.Storage/storageAccounts/tableServices@2023-05-01' = {
+  parent: runtimeStorage
+  name: 'default'
+}
+
+resource projectionTables 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = [for tableName in projectionTableNames: {
+  parent: tableService
+  name: tableName
+}]
+
 resource hostingPlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: hostingPlanName
   location: location
@@ -97,6 +165,37 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   properties: {
     reserved: true
     zoneRedundant: false
+  }
+}
+
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+  name: logAnalyticsWorkspaceName
+  location: location
+  tags: tags
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    retentionInDays: 30
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
+    workspaceCapping: {
+      dailyQuotaGb: json('0.1')
+    }
+  }
+}
+
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    IngestionMode: 'LogAnalytics'
+    WorkspaceResourceId: logAnalytics.id
+    RetentionInDays: 30
   }
 }
 
@@ -133,8 +232,6 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       }
     }
     siteConfig: {
-      alwaysOn: false
-      ftpsState: 'Disabled'
       minTlsVersion: '1.2'
       appSettings: [
         {
@@ -142,16 +239,20 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
           value: 'managedidentity'
         }
         {
-          name: 'AzureWebJobsStorage__blobServiceUri'
-          value: runtimeStorage.properties.primaryEndpoints.blob
+          name: 'AzureWebJobsStorage__accountName'
+          value: runtimeStorage.name
         }
         {
-          name: 'AzureWebJobsStorage__queueServiceUri'
-          value: runtimeStorage.properties.primaryEndpoints.queue
+          name: 'CRM_STORAGE_ACCOUNT_NAME'
+          value: runtimeStorage.name
         }
         {
-          name: 'AzureWebJobsStorage__tableServiceUri'
-          value: runtimeStorage.properties.primaryEndpoints.table
+          name: 'AzureWebJobsFeatureFlags'
+          value: 'EnableWorkerIndexing'
+        }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: applicationInsights.properties.ConnectionString
         }
       ]
     }
@@ -189,7 +290,20 @@ resource tableRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 output functionAppName string = functionApp.name
+output functionAppId string = functionApp.id
 output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}'
 output runtimeName string = functionApp.properties.functionAppConfig.runtime.name
 output runtimeVersion string = functionApp.properties.functionAppConfig.runtime.version
 output runtimeStorageName string = runtimeStorage.name
+output blobContainerNames array = [
+  domainEventsContainer.name
+  sourcePayloadsContainer.name
+  documentsContainer.name
+]
+output queueNames array = [
+  projectionQueue.name
+  workflowQueue.name
+]
+output tableNames array = projectionTableNames
+output applicationInsightsName string = applicationInsights.name
+output logAnalyticsWorkspaceName string = logAnalytics.name

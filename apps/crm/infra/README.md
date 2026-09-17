@@ -41,9 +41,29 @@ az deployment sub what-if \
   --parameters location=<resource-location> installationName=<installation-name>
 ```
 
-The current entry point creates the resource group, CRM Static Web App, CRM API
-foundation, storage, managed identity, and storage role assignments. It returns
-the generated CRM application URL and API URL as deployment outputs.
+The current entry point creates the resource group, Standard CRM Static Web App, CRM API
+foundation, one StorageV2 account, managed identity, and storage role
+assignments. The storage account supplies the CRM data foundation without a
+database server:
+
+- Blob containers preserve domain events, unchanged source payloads, and
+  documents.
+- Queue Storage carries projection and workflow work independently of the PWA.
+- Table Storage holds rebuildable organization, branch, staff, identity,
+  membership, and login-audit projections.
+- Application Insights and a 30-day Log Analytics workspace capture bounded
+  operational diagnostics. The workspace has a 0.1 GB daily ingestion cap so
+  a failure loop cannot create unbounded telemetry charges.
+
+The entry point returns the generated CRM application URL, API URL, storage
+account, blob containers, queues, and tables as deployment outputs.
+
+The Static Web App uses the Standard plan because Azure requires Standard for
+linking the separately managed Function App. Bicep declares that link rather
+than leaving it as a portal-only setup step. The link keeps browser requests on
+the PWA's `/api` route while the Function App retains non-HTTP queue and
+scheduled work. The installer must disclose this fixed hosting charge before
+deployment.
 
 Application-code publication, identity registration, and cost controls remain
 later slices and must be present before this template is advertised as a

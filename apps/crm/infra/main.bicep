@@ -46,14 +46,24 @@ module crmWeb 'crm-web.bicep' = {
     location: location
     environmentName: environmentName
     installationName: installationName
+    functionAppResourceId: crmApi.outputs.functionAppId
+    functionAppRegion: location
   }
 }
 
 output resourceGroupName string = crmResourceGroup.name
 output crmApiName string = crmApi.outputs.functionAppName
+output crmApiResourceId string = crmApi.outputs.functionAppId
 output crmApiUrl string = crmApi.outputs.functionAppUrl
 output crmApplicationName string = crmWeb.outputs.staticWebAppName
 output crmApplicationUrl string = crmWeb.outputs.applicationUrl
+output crmApplicationPlan string = crmWeb.outputs.hostingPlan
+output crmLinkedApiResourceId string = crmWeb.outputs.linkedApiResourceId
 output storageAccountName string = crmApi.outputs.runtimeStorageName
+output blobContainerNames array = crmApi.outputs.blobContainerNames
+output queueNames array = crmApi.outputs.queueNames
+output tableNames array = crmApi.outputs.tableNames
+output applicationInsightsName string = crmApi.outputs.applicationInsightsName
+output logAnalyticsWorkspaceName string = crmApi.outputs.logAnalyticsWorkspaceName
 output runtimeName string = crmApi.outputs.runtimeName
 output runtimeVersion string = crmApi.outputs.runtimeVersion

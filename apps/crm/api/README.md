@@ -32,8 +32,8 @@ python -m pip install -r requirements.txt
 func start
 ```
 
-The initial endpoint uses an explicit `function.json` binding so Azure indexes
-it deterministically across current Flex Consumption hosts:
+The initial endpoint uses the Python v2 `FunctionApp` programming model used by
+Microsoft's current Flex Consumption reference applications:
 
 ```text
 GET http://localhost:7071/api/v1/health
