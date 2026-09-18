@@ -1,0 +1,838 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.46.1.21595",
+      "templateHash": "13083636478675526461"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure region where the customer-owned CRM resources will be created."
+      }
+    },
+    "installationName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 20,
+      "metadata": {
+        "description": "Short lowercase name for this CRM installation; use letters, numbers, and hyphens."
+      }
+    },
+    "environmentName": {
+      "type": "string",
+      "defaultValue": "production",
+      "allowedValues": [
+        "development",
+        "production"
+      ],
+      "metadata": {
+        "description": "Durable environment represented by this deployment."
+      }
+    },
+    "functionPackageUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Public HTTPS URL of the versioned Azure Functions source package. The file name must be released-package.zip."
+      },
+      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.1/released-package.zip"
+    },
+    "webPackageUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Public HTTPS URL of the versioned compiled CRM PWA package."
+      },
+      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.1/crm-web.zip"
+    }
+  },
+  "variables": {
+    "resourceGroupName": "[format('rg-{0}-crm-{1}', parameters('installationName'), parameters('environmentName'))]",
+    "tags": {
+      "product": "thelendersapp-toolkit-crm",
+      "environment": "[parameters('environmentName')]",
+      "managed-by": "bicep",
+      "installation": "[parameters('installationName')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2024-03-01",
+      "name": "[variables('resourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "crm-api",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environmentName": {
+            "value": "[parameters('environmentName')]"
+          },
+          "installationName": {
+            "value": "[parameters('installationName')]"
+          },
+          "functionPackageUri": {
+            "value": "[parameters('functionPackageUri')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.46.1.21595",
+              "templateHash": "9484027172416064184"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for the customer-owned CRM API resources."
+              }
+            },
+            "environmentName": {
+              "type": "string",
+              "defaultValue": "production",
+              "allowedValues": [
+                "development",
+                "production"
+              ],
+              "metadata": {
+                "description": "Durable environment name used for tags and resource names."
+              }
+            },
+            "installationName": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 20,
+              "metadata": {
+                "description": "Installation name chosen by the customer; use lowercase letters, numbers, and hyphens."
+              }
+            },
+            "functionPackageUri": {
+              "type": "string",
+              "metadata": {
+                "description": "Public HTTPS URL of the versioned Function source package. The file name must be released-package.zip."
+              }
+            },
+            "functionAppName": {
+              "type": "string",
+              "defaultValue": "[format('func-{0}-crm-{1}-{2}', parameters('installationName'), parameters('environmentName'), take(uniqueString(subscription().id, resourceGroup().id), 6))]",
+              "metadata": {
+                "description": "Globally unique customer CRM Function App name."
+              }
+            },
+            "storageAccountName": {
+              "type": "string",
+              "defaultValue": "[format('st{0}crm{1}', take(replace(parameters('installationName'), '-', ''), 8), take(uniqueString(subscription().id, resourceGroup().id), 8))]",
+              "metadata": {
+                "description": "Globally unique CRM runtime and deployment storage account name."
+              }
+            },
+            "hostingPlanName": {
+              "type": "string",
+              "defaultValue": "[format('plan-{0}-crm-functions-{1}', parameters('installationName'), parameters('environmentName'))]",
+              "metadata": {
+                "description": "Flex Consumption plan for the customer CRM API."
+              }
+            },
+            "logAnalyticsWorkspaceName": {
+              "type": "string",
+              "defaultValue": "[format('log-{0}-crm-{1}', parameters('installationName'), parameters('environmentName'))]",
+              "metadata": {
+                "description": "Log Analytics workspace used for bounded CRM operational diagnostics."
+              }
+            },
+            "applicationInsightsName": {
+              "type": "string",
+              "defaultValue": "[format('appi-{0}-crm-{1}', parameters('installationName'), parameters('environmentName'))]",
+              "metadata": {
+                "description": "Application Insights resource used for Function failures and performance telemetry."
+              }
+            }
+          },
+          "variables": {
+            "deploymentContainerName": "[format('app-package-{0}', take(parameters('functionAppName'), 32))]",
+            "domainEventsContainerName": "domain-events",
+            "sourcePayloadsContainerName": "source-payloads",
+            "documentsContainerName": "documents",
+            "projectionQueueName": "projection-events",
+            "workflowQueueName": "workflow-events",
+            "projectionTableNames": [
+              "Organizations",
+              "Branches",
+              "StaffProfiles",
+              "IdentityLinks",
+              "Memberships",
+              "LoginAudit"
+            ],
+            "storageBlobDataOwnerRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b')]",
+            "storageQueueDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')]",
+            "storageTableDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')]",
+            "tags": {
+              "product": "thelendersapp-toolkit",
+              "environment": "[parameters('environmentName')]",
+              "managed-by": "bicep",
+              "purpose": "customer-crm-api",
+              "installation": "[parameters('installationName')]"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "tags": "[variables('tags')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "accessTier": "Hot",
+                "allowBlobPublicAccess": false,
+                "allowCrossTenantReplication": false,
+                "allowSharedKeyAccess": false,
+                "defaultToOAuthAuthentication": true,
+                "minimumTlsVersion": "TLS1_2",
+                "publicNetworkAccess": "Enabled",
+                "networkAcls": {
+                  "bypass": "AzureServices",
+                  "defaultAction": "Allow"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+              "properties": {
+                "deleteRetentionPolicy": {
+                  "enabled": true,
+                  "days": 7
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', variables('deploymentContainerName'))]",
+              "properties": {
+                "publicAccess": "None"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', variables('domainEventsContainerName'))]",
+              "properties": {
+                "publicAccess": "None"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', variables('sourcePayloadsContainerName'))]",
+              "properties": {
+                "publicAccess": "None"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', variables('documentsContainerName'))]",
+              "properties": {
+                "publicAccess": "None"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/queueServices",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', variables('projectionQueueName'))]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', variables('workflowQueueName'))]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/tableServices",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "projectionTables",
+                "count": "[length(variables('projectionTableNames'))]"
+              },
+              "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', variables('projectionTableNames')[copyIndex()])]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', parameters('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2024-04-01",
+              "name": "[parameters('hostingPlanName')]",
+              "location": "[parameters('location')]",
+              "tags": "[variables('tags')]",
+              "kind": "functionapp",
+              "sku": {
+                "name": "FC1",
+                "tier": "FlexConsumption"
+              },
+              "properties": {
+                "reserved": true,
+                "zoneRedundant": false
+              }
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2023-09-01",
+              "name": "[parameters('logAnalyticsWorkspaceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[variables('tags')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": 30,
+                "features": {
+                  "enableLogAccessUsingOnlyResourcePermissions": true
+                },
+                "workspaceCapping": {
+                  "dailyQuotaGb": "[json('0.1')]"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[parameters('applicationInsightsName')]",
+              "location": "[parameters('location')]",
+              "tags": "[variables('tags')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "IngestionMode": "LogAnalytics",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+                "RetentionInDays": 30
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2024-04-01",
+              "name": "[parameters('functionAppName')]",
+              "location": "[parameters('location')]",
+              "tags": "[variables('tags')]",
+              "kind": "functionapp,linux",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "httpsOnly": true,
+                "publicNetworkAccess": "Enabled",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+                "functionAppConfig": {
+                  "deployment": {
+                    "storage": {
+                      "type": "blobContainer",
+                      "value": "[format('{0}{1}', reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-05-01').primaryEndpoints.blob, variables('deploymentContainerName'))]",
+                      "authentication": {
+                        "type": "SystemAssignedIdentity"
+                      }
+                    }
+                  },
+                  "runtime": {
+                    "name": "python",
+                    "version": "3.12"
+                  },
+                  "scaleAndConcurrency": {
+                    "maximumInstanceCount": 2,
+                    "instanceMemoryMB": 512,
+                    "alwaysReady": []
+                  }
+                },
+                "siteConfig": {
+                  "minTlsVersion": "1.2",
+                  "appSettings": [
+                    {
+                      "name": "AzureWebJobsStorage__credential",
+                      "value": "managedidentity"
+                    },
+                    {
+                      "name": "AzureWebJobsStorage__accountName",
+                      "value": "[parameters('storageAccountName')]"
+                    },
+                    {
+                      "name": "CRM_STORAGE_ACCOUNT_NAME",
+                      "value": "[parameters('storageAccountName')]"
+                    },
+                    {
+                      "name": "AzureWebJobsFeatureFlags",
+                      "value": "EnableWorkerIndexing"
+                    },
+                    {
+                      "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                      "value": "[reference(resourceId('Microsoft.Insights/components', parameters('applicationInsightsName')), '2020-02-02').ConnectionString]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', variables('deploymentContainerName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), resourceId('Microsoft.Web/sites', parameters('functionAppName')), variables('storageBlobDataOwnerRoleId'))]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2024-04-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('storageBlobDataOwnerRoleId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), resourceId('Microsoft.Web/sites', parameters('functionAppName')), variables('storageQueueDataContributorRoleId'))]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2024-04-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('storageQueueDataContributorRoleId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), resourceId('Microsoft.Web/sites', parameters('functionAppName')), variables('storageTableDataContributorRoleId'))]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2024-04-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('storageTableDataContributorRoleId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites/extensions",
+              "apiVersion": "2022-09-01",
+              "name": "[format('{0}/onedeploy', parameters('functionAppName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "packageUri": "[parameters('functionPackageUri')]",
+                "remoteBuild": true
+              },
+              "dependsOn": [
+                "[extensionResourceId(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), resourceId('Microsoft.Web/sites', parameters('functionAppName')), variables('storageBlobDataOwnerRoleId')))]",
+                "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "functionAppName": {
+              "type": "string",
+              "value": "[parameters('functionAppName')]"
+            },
+            "functionAppId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+            },
+            "functionAppUrl": {
+              "type": "string",
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2024-04-01').defaultHostName)]"
+            },
+            "runtimeName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2024-04-01').functionAppConfig.runtime.name]"
+            },
+            "runtimeVersion": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2024-04-01').functionAppConfig.runtime.version]"
+            },
+            "runtimeStorageName": {
+              "type": "string",
+              "value": "[parameters('storageAccountName')]"
+            },
+            "blobContainerNames": {
+              "type": "array",
+              "value": [
+                "[variables('domainEventsContainerName')]",
+                "[variables('sourcePayloadsContainerName')]",
+                "[variables('documentsContainerName')]"
+              ]
+            },
+            "queueNames": {
+              "type": "array",
+              "value": [
+                "[variables('projectionQueueName')]",
+                "[variables('workflowQueueName')]"
+              ]
+            },
+            "tableNames": {
+              "type": "array",
+              "value": "[variables('projectionTableNames')]"
+            },
+            "applicationInsightsName": {
+              "type": "string",
+              "value": "[parameters('applicationInsightsName')]"
+            },
+            "logAnalyticsWorkspaceName": {
+              "type": "string",
+              "value": "[parameters('logAnalyticsWorkspaceName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "crm-web",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environmentName": {
+            "value": "[parameters('environmentName')]"
+          },
+          "installationName": {
+            "value": "[parameters('installationName')]"
+          },
+          "functionAppResourceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.functionAppId.value]"
+          },
+          "functionAppRegion": {
+            "value": "[parameters('location')]"
+          },
+          "webPackageUri": {
+            "value": "[parameters('webPackageUri')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.46.1.21595",
+              "templateHash": "8502030066955807452"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for the customer-owned CRM web application."
+              }
+            },
+            "environmentName": {
+              "type": "string",
+              "allowedValues": [
+                "development",
+                "production"
+              ],
+              "metadata": {
+                "description": "Durable environment name used for tags and resource names."
+              }
+            },
+            "installationName": {
+              "type": "string",
+              "metadata": {
+                "description": "Installation name chosen by the customer."
+              }
+            },
+            "functionAppResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the customer-owned CRM Function App linked at the /api route."
+              }
+            },
+            "functionAppRegion": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region containing the linked CRM Function App."
+              }
+            },
+            "webPackageUri": {
+              "type": "string",
+              "metadata": {
+                "description": "Public HTTPS URL of the versioned compiled CRM PWA package."
+              }
+            },
+            "staticWebAppName": {
+              "type": "string",
+              "defaultValue": "[format('stapp-{0}-crm-{1}-{2}', parameters('installationName'), parameters('environmentName'), take(uniqueString(subscription().id, resourceGroup().id), 6))]",
+              "metadata": {
+                "description": "Globally unique Static Web App name for the customer CRM."
+              }
+            }
+          },
+          "variables": {
+            "tags": {
+              "product": "thelendersapp-toolkit-crm",
+              "environment": "[parameters('environmentName')]",
+              "managed-by": "bicep",
+              "purpose": "customer-crm-web",
+              "installation": "[parameters('installationName')]"
+            },
+            "contributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[format('id-{0}-crm-installer-{1}', parameters('installationName'), parameters('environmentName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[variables('tags')]"
+            },
+            {
+              "type": "Microsoft.Web/staticSites",
+              "apiVersion": "2023-12-01",
+              "name": "[parameters('staticWebAppName')]",
+              "location": "[parameters('location')]",
+              "tags": "[variables('tags')]",
+              "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+              },
+              "properties": {
+                "allowConfigFileUpdates": true,
+                "stagingEnvironmentPolicy": "Enabled"
+              }
+            },
+            {
+              "type": "Microsoft.Web/staticSites/linkedBackends",
+              "apiVersion": "2023-12-01",
+              "name": "[format('{0}/{1}', parameters('staticWebAppName'), last(split(parameters('functionAppResourceId'), '/')))]",
+              "properties": {
+                "backendResourceId": "[parameters('functionAppResourceId')]",
+                "region": "[parameters('functionAppRegion')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName'))]",
+              "name": "[guid(resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}-crm-installer-{1}', parameters('installationName'), parameters('environmentName'))), variables('contributorRoleId'))]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}-crm-installer-{1}', parameters('installationName'), parameters('environmentName'))), '2023-01-31').principalId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('contributorRoleId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}-crm-installer-{1}', parameters('installationName'), parameters('environmentName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Resources/deploymentScripts",
+              "apiVersion": "2023-08-01",
+              "name": "[format('deploy-{0}-crm-web-{1}', parameters('installationName'), parameters('environmentName'))]",
+              "location": "[parameters('location')]",
+              "kind": "AzureCLI",
+              "identity": {
+                "type": "userAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}-crm-installer-{1}', parameters('installationName'), parameters('environmentName'))))]": {}
+                }
+              },
+              "properties": {
+                "azCliVersion": "2.67.0",
+                "cleanupPreference": "OnSuccess",
+                "forceUpdateTag": "[parameters('webPackageUri')]",
+                "retentionInterval": "P1D",
+                "timeout": "PT15M",
+                "scriptContent": "      cat > web-deployment.json <<'JSON'\n      {\n        \"properties\": {\n          \"appZipUrl\": \"${webPackageUri}\",\n          \"deploymentTitle\": \"The Lenders App Toolkit CRM\",\n          \"provider\": \"The Lenders App Toolkit\"\n        }\n      }\n      JSON\n\n      az rest \\\n        --method post \\\n        --url \"${trim(environment().resourceManager, '/')}${crmWeb.id}/zipdeploy?api-version=2024-11-01\" \\\n        --body @web-deployment.json \\\n        --output none\n\n      application_url=\"https://${crmWeb.properties.defaultHostname}\"\n      for attempt in $(seq 1 60); do\n        if curl --fail --silent --show-error \"$application_url\" >/dev/null \\\n          && curl --fail --silent --show-error \"$application_url/api/v1/health\" >/dev/null; then\n          exit 0\n        fi\n        sleep 10\n      done\n\n      echo \"The CRM application or API did not become healthy within 10 minutes.\" >&2\n      exit 1\n    "
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}-crm-installer-{1}', parameters('installationName'), parameters('environmentName')))]",
+                "[extensionResourceId(resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}-crm-installer-{1}', parameters('installationName'), parameters('environmentName'))), variables('contributorRoleId')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "staticWebAppName": {
+              "type": "string",
+              "value": "[parameters('staticWebAppName')]"
+            },
+            "applicationUrl": {
+              "type": "string",
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName')), '2023-12-01').defaultHostname)]"
+            },
+            "hostingPlan": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName')), '2023-12-01', 'full').sku.name]"
+            },
+            "linkedApiResourceId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/staticSites/linkedBackends', parameters('staticWebAppName'), last(split(parameters('functionAppResourceId'), '/'))), '2023-12-01').backendResourceId]"
+            },
+            "installerIdentityName": {
+              "type": "string",
+              "value": "[format('id-{0}-crm-installer-{1}', parameters('installationName'), parameters('environmentName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[variables('resourceGroupName')]"
+    },
+    "crmApiName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.functionAppName.value]"
+    },
+    "crmApiResourceId": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.functionAppId.value]"
+    },
+    "crmApiUrl": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.functionAppUrl.value]"
+    },
+    "crmApplicationName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-web'), '2025-04-01').outputs.staticWebAppName.value]"
+    },
+    "crmApplicationUrl": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-web'), '2025-04-01').outputs.applicationUrl.value]"
+    },
+    "crmApplicationPlan": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-web'), '2025-04-01').outputs.hostingPlan.value]"
+    },
+    "crmLinkedApiResourceId": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-web'), '2025-04-01').outputs.linkedApiResourceId.value]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.runtimeStorageName.value]"
+    },
+    "blobContainerNames": {
+      "type": "array",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.blobContainerNames.value]"
+    },
+    "queueNames": {
+      "type": "array",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.queueNames.value]"
+    },
+    "tableNames": {
+      "type": "array",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.tableNames.value]"
+    },
+    "applicationInsightsName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.applicationInsightsName.value]"
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.logAnalyticsWorkspaceName.value]"
+    },
+    "runtimeName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.runtimeName.value]"
+    },
+    "runtimeVersion": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.runtimeVersion.value]"
+    },
+    "installerIdentityName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-web'), '2025-04-01').outputs.installerIdentityName.value]"
+    }
+  }
+}

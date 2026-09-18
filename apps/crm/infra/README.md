@@ -82,17 +82,21 @@ later slices. They must be present before the CRM handles confidential data.
 
 ## Build a versioned installer
 
-Run:
+Prepare the Azure Portal template for the intended version, review and commit
+it, and then build the artifacts:
 
 ```sh
+./scripts/prepare-azure-portal-template.sh crm-v<version>
 ./scripts/build-azure-installer.sh
 ```
 
-This produces ignored local artifacts under `dist/azure-installer`. A tag named
-`crm-v<version>` runs the release workflow, binds the ARM template to the two
-immutable packages from that GitHub release, and publishes a Microsoft Azure
-deployment link. The marketplace must link to a tested release, never to a
-moving branch.
+The preparation script creates the tracked `azuredeploy.json` with immutable
+package URLs for that version. The build produces ignored local artifacts under
+`dist/azure-installer`. A matching tag named `crm-v<version>` runs the release
+workflow, verifies that the committed template and tag agree, publishes the two
+packages, and creates a Microsoft Azure deployment link that uses GitHub's
+CORS-compatible raw-file endpoint. The marketplace must link to a tested
+release, never to a moving branch.
 
 ## Data-removal boundary
 
