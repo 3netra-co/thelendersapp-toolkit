@@ -1,0 +1,62 @@
+name: Release CRM Azure installer
+
+on:
+  push:
+    tags:
+      - "crm-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build immutable installer release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/crm/web/package-lock.json
+
+      - name: Build application and installer artifacts
+        run: ./scripts/build-azure-installer.sh
+
+      - name: Bind the template to this immutable release
+        env:
+          RELEASE_BASE: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}
+        run: |
+          jq \
+            --arg api "${RELEASE_BASE}/released-package.zip" \
+            --arg web "${RELEASE_BASE}/crm-web.zip" \
+            '.parameters.functionPackageUri.defaultValue = $api | .parameters.webPackageUri.defaultValue = $web' \
+            dist/azure-installer/azuredeploy.json \
+            > dist/azure-installer/azuredeploy.release.json
+          mv dist/azure-installer/azuredeploy.release.json dist/azure-installer/azuredeploy.json
+
+      - name: Create checksums and Azure deployment link
+        env:
+          TEMPLATE_URL: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/azuredeploy.json
+        run: |
+          cd dist/azure-installer
+          sha256sum azuredeploy.json crm-web.zip released-package.zip > SHA256SUMS.txt
+          encoded_url="$(printf '%s' "${TEMPLATE_URL}" | jq -sRr @uri)"
+          printf 'https://portal.azure.com/#create/Microsoft.Template/uri/%s\n' "${encoded_url}" > deploy-to-azure.txt
+
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/azure-installer/azuredeploy.json \
+            dist/azure-installer/crm-web.zip \
+            dist/azure-installer/released-package.zip \
+            dist/azure-installer/SHA256SUMS.txt \
+            dist/azure-installer/deploy-to-azure.txt \
+            --prerelease \
+            --title "Toolkit CRM ${GITHUB_REF_NAME}" \
+            --notes "Pre-production customer-owned Azure CRM installer. Do not use confidential customer or borrower data."

@@ -65,10 +65,34 @@ the PWA's `/api` route while the Function App retains non-HTTP queue and
 scheduled work. The installer must disclose this fixed hosting charge before
 deployment.
 
-Application-code publication, identity registration, and cost controls remain
-later slices and must be present before this template is advertised as a
-complete CRM install. Creating the Static Web App alone does not publish the
-compiled PWA into it.
+The template requires immutable public HTTPS URLs for two release artifacts:
+
+- `released-package.zip` contains the Python Function project at the ZIP root.
+- `crm-web.zip` contains the compiled PWA at the ZIP root.
+
+The Function package is published with Azure Functions One Deploy. The PWA is
+published through Azure's Static Web Apps ZIP deployment API by a
+customer-owned installer identity. The identity receives Contributor access
+only on the new Static Web App; it has no access to other customer resources.
+The deployment does not report success until the PWA and its
+`/api/v1/health` route both respond.
+
+Customer identity registration and application-level cost controls remain
+later slices. They must be present before the CRM handles confidential data.
+
+## Build a versioned installer
+
+Run:
+
+```sh
+./scripts/build-azure-installer.sh
+```
+
+This produces ignored local artifacts under `dist/azure-installer`. A tag named
+`crm-v<version>` runs the release workflow, binds the ARM template to the two
+immutable packages from that GitHub release, and publishes a Microsoft Azure
+deployment link. The marketplace must link to a tested release, never to a
+moving branch.
 
 ## Data-removal boundary
 

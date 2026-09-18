@@ -15,6 +15,12 @@ param installationName string
 ])
 param environmentName string = 'production'
 
+@description('Public HTTPS URL of the versioned Azure Functions source package. The file name must be released-package.zip.')
+param functionPackageUri string
+
+@description('Public HTTPS URL of the versioned compiled CRM PWA package.')
+param webPackageUri string
+
 var resourceGroupName = 'rg-${installationName}-crm-${environmentName}'
 var tags = {
   product: 'thelendersapp-toolkit-crm'
@@ -36,6 +42,7 @@ module crmApi 'crm-api.bicep' = {
     location: location
     environmentName: environmentName
     installationName: installationName
+    functionPackageUri: functionPackageUri
   }
 }
 
@@ -48,6 +55,7 @@ module crmWeb 'crm-web.bicep' = {
     installationName: installationName
     functionAppResourceId: crmApi.outputs.functionAppId
     functionAppRegion: location
+    webPackageUri: webPackageUri
   }
 }
 
@@ -67,3 +75,4 @@ output applicationInsightsName string = crmApi.outputs.applicationInsightsName
 output logAnalyticsWorkspaceName string = crmApi.outputs.logAnalyticsWorkspaceName
 output runtimeName string = crmApi.outputs.runtimeName
 output runtimeVersion string = crmApi.outputs.runtimeVersion
+output installerIdentityName string = crmWeb.outputs.installerIdentityName

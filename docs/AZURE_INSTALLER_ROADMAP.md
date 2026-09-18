@@ -44,6 +44,10 @@ Exit test: the local and deployed `/api/v1/health` endpoints report healthy.
 Exit test: a clean temporary resource group can be created twice without duplicate
 resources, and the second deployment is an update rather than a replacement.
 
+Current implementation note: the versioned installer also publishes the Python
+Function and compiled PWA packages. A deployment is treated as healthy only
+after both the PWA root and `/api/v1/health` respond.
+
 ### Slice 3: Customer-owned identity
 
 - tenant and permission preflight

@@ -13,6 +13,9 @@ param environmentName string = 'production'
 @maxLength(20)
 param installationName string
 
+@description('Public HTTPS URL of the versioned Function source package. The file name must be released-package.zip.')
+param functionPackageUri string
+
 @description('Globally unique customer CRM Function App name.')
 param functionAppName string = 'func-${installationName}-crm-${environmentName}-${take(uniqueString(subscription().id, resourceGroup().id), 6)}'
 
@@ -287,6 +290,20 @@ resource tableRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
     principalType: 'ServicePrincipal'
     roleDefinitionId: storageTableDataContributorRoleId
   }
+}
+
+resource functionPackageDeployment 'Microsoft.Web/sites/extensions@2022-09-01' = {
+  #disable-next-line use-parent-property
+  name: '${functionApp.name}/onedeploy'
+  #disable-next-line BCP187
+  location: location
+  properties: {
+    packageUri: functionPackageUri
+    remoteBuild: true
+  }
+  dependsOn: [
+    blobRole
+  ]
 }
 
 output functionAppName string = functionApp.name
