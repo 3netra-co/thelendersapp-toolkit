@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.46.1.21595",
-      "templateHash": "13083636478675526461"
+      "templateHash": "5852869748958567279"
     }
   },
   "parameters": {
@@ -39,14 +39,14 @@
       "metadata": {
         "description": "Public HTTPS URL of the versioned Azure Functions source package. The file name must be released-package.zip."
       },
-      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.1/released-package.zip"
+      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.2/released-package.zip"
     },
     "webPackageUri": {
       "type": "string",
       "metadata": {
         "description": "Public HTTPS URL of the versioned compiled CRM PWA package."
       },
-      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.1/crm-web.zip"
+      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.2/crm-web.zip"
     }
   },
   "variables": {
@@ -597,7 +597,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.46.1.21595",
-              "templateHash": "8502030066955807452"
+              "templateHash": "13317681757926471769"
             }
           },
           "parameters": {
@@ -727,7 +727,7 @@
                 "forceUpdateTag": "[parameters('webPackageUri')]",
                 "retentionInterval": "P1D",
                 "timeout": "PT15M",
-                "scriptContent": "      cat > web-deployment.json <<'JSON'\n      {\n        \"properties\": {\n          \"appZipUrl\": \"${webPackageUri}\",\n          \"deploymentTitle\": \"The Lenders App Toolkit CRM\",\n          \"provider\": \"The Lenders App Toolkit\"\n        }\n      }\n      JSON\n\n      az rest \\\n        --method post \\\n        --url \"${trim(environment().resourceManager, '/')}${crmWeb.id}/zipdeploy?api-version=2024-11-01\" \\\n        --body @web-deployment.json \\\n        --output none\n\n      application_url=\"https://${crmWeb.properties.defaultHostname}\"\n      for attempt in $(seq 1 60); do\n        if curl --fail --silent --show-error \"$application_url\" >/dev/null \\\n          && curl --fail --silent --show-error \"$application_url/api/v1/health\" >/dev/null; then\n          exit 0\n        fi\n        sleep 10\n      done\n\n      echo \"The CRM application or API did not become healthy within 10 minutes.\" >&2\n      exit 1\n    "
+                "scriptContent": "      apk add --no-cache nodejs npm unzip\n\n      curl --fail --location --silent --show-error \\\n        \"${webPackageUri}\" \\\n        --output crm-web.zip\n      mkdir crm-web\n      unzip -q crm-web.zip -d crm-web\n\n      deployment_token=\"$(az staticwebapp secrets list \\\n        --name \"${crmWeb.name}\" \\\n        --resource-group \"${resourceGroup().name}\" \\\n        --query properties.apiKey \\\n        --output tsv)\"\n      test -n \"$deployment_token\"\n\n      SWA_CLI_DEPLOYMENT_TOKEN=\"$deployment_token\" \\\n        npx --yes @azure/static-web-apps-cli@2.0.10 deploy crm-web --env production\n      unset deployment_token\n\n      application_url=\"https://${crmWeb.properties.defaultHostname}\"\n      for attempt in $(seq 1 60); do\n        if curl --fail --silent --show-error \"$application_url\" \\\n            | grep --quiet 'name=\"thelendersapp-product\" content=\"toolkit-crm\"' \\\n          && curl --fail --silent --show-error \"$application_url/api/v1/health\" >/dev/null; then\n          printf '{\"applicationUrl\":\"%s\",\"healthUrl\":\"%s/api/v1/health\"}' \\\n            \"$application_url\" \"$application_url\" > \"$AZ_SCRIPTS_OUTPUT_PATH\"\n          exit 0\n        fi\n        sleep 10\n      done\n\n      echo \"The CRM application or API did not become healthy within 10 minutes.\" >&2\n      exit 1\n    "
               },
               "dependsOn": [
                 "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}-crm-installer-{1}', parameters('installationName'), parameters('environmentName')))]",

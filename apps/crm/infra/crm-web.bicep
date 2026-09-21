@@ -91,26 +91,32 @@ resource webPackageDeployment 'Microsoft.Resources/deploymentScripts@2023-08-01'
     retentionInterval: 'P1D'
     timeout: 'PT15M'
     scriptContent: '''
-      cat > web-deployment.json <<'JSON'
-      {
-        "properties": {
-          "appZipUrl": "${webPackageUri}",
-          "deploymentTitle": "The Lenders App Toolkit CRM",
-          "provider": "The Lenders App Toolkit"
-        }
-      }
-      JSON
+      apk add --no-cache nodejs npm unzip
 
-      az rest \
-        --method post \
-        --url "${trim(environment().resourceManager, '/')}${crmWeb.id}/zipdeploy?api-version=2024-11-01" \
-        --body @web-deployment.json \
-        --output none
+      curl --fail --location --silent --show-error \
+        "${webPackageUri}" \
+        --output crm-web.zip
+      mkdir crm-web
+      unzip -q crm-web.zip -d crm-web
+
+      deployment_token="$(az staticwebapp secrets list \
+        --name "${crmWeb.name}" \
+        --resource-group "${resourceGroup().name}" \
+        --query properties.apiKey \
+        --output tsv)"
+      test -n "$deployment_token"
+
+      SWA_CLI_DEPLOYMENT_TOKEN="$deployment_token" \
+        npx --yes @azure/static-web-apps-cli@2.0.10 deploy crm-web --env production
+      unset deployment_token
 
       application_url="https://${crmWeb.properties.defaultHostname}"
       for attempt in $(seq 1 60); do
-        if curl --fail --silent --show-error "$application_url" >/dev/null \
+        if curl --fail --silent --show-error "$application_url" \
+            | grep --quiet 'name="thelendersapp-product" content="toolkit-crm"' \
           && curl --fail --silent --show-error "$application_url/api/v1/health" >/dev/null; then
+          printf '{"applicationUrl":"%s","healthUrl":"%s/api/v1/health"}' \
+            "$application_url" "$application_url" > "$AZ_SCRIPTS_OUTPUT_PATH"
           exit 0
         fi
         sleep 10
