@@ -25,8 +25,7 @@ Customer deployments use the customer's installation name:
 
 ```text
 Resource group:    rg-<installation>-crm-production
-Static Web App:    stapp-<installation>-crm-production
-Function App:      func-<installation>-crm-production
+CRM PWA/API:       func-<installation>-crm-production-<unique>
 Storage account:   st<installation><generated-suffix>
 ```
 

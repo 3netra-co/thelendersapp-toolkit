@@ -35,7 +35,7 @@ Exit test: the local and deployed `/api/v1/health` endpoints report healthy.
 ### Slice 2: Repeatable Azure infrastructure
 
 - subscription and resource-group Bicep entry points
-- Static Web App, Flex Consumption Functions, and storage
+- Flex Consumption Function-hosted PWA/API and storage
 - managed identities and least-privilege role assignments
 - tables, blob containers, and queues
 - stable outputs including the customer PWA URL
@@ -44,12 +44,11 @@ Exit test: the local and deployed `/api/v1/health` endpoints report healthy.
 Exit test: a clean temporary resource group can be created twice without duplicate
 resources, and the second deployment is an update rather than a replacement.
 
-Current implementation note: the versioned installer also publishes the Python
-Function package. After Bicep completes, the browser installer publishes the
-compiled PWA through Azure Resource Manager's Static Web Apps ZIP deployment
-operation. No customer container or deployment-script resource is created. A
-deployment is treated as healthy only after both the PWA root and
-`/api/v1/health` respond.
+Current implementation note: the versioned Function package contains both the
+Python API and compiled PWA. Azure Functions One Deploy publishes them
+atomically, so no second hosting deployment, customer container, or deployment
+script is required. A deployment is treated as healthy only after both the PWA
+root and `/api/v1/health` respond.
 
 ### Slice 3: Customer-owned identity
 
@@ -92,7 +91,7 @@ operations granted by their roles.
 - region, organization name, deployment name, and cost/resource confirmation
 - permission preflight before billable resources
 - deployment progress, retry, and actionable failures
-- final Azure Static Web Apps URL and PWA installation guidance
+- final customer-owned Azure URL and PWA installation guidance
 - versioned release selection rather than deployment from a moving branch
 
 Exit test: a new administrator can follow the published deployment link, deploy

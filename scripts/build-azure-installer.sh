@@ -20,7 +20,7 @@ mkdir -p "${release_dir}/api-package" "${release_dir}/web-package"
 )
 
 cp "${api_dir}/function_app.py" "${api_dir}/host.json" "${api_dir}/requirements.txt" "${release_dir}/api-package/"
-cp "${release_dir}/crm-web.zip" "${release_dir}/api-package/crm-web.zip"
+cp -R "${web_dir}/dist/web" "${release_dir}/api-package/web"
 cp -R "${api_dir}/crm_api" "${release_dir}/api-package/crm_api"
 
 (

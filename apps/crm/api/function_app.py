@@ -1,15 +1,18 @@
 import json
+import mimetypes
 from pathlib import Path
 
 import azure.functions as func
 
 from crm_api.health import health_payload
+from crm_api.web import resolve_web_asset
 
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
+WEB_ROOT = Path(__file__).resolve().parent / "web"
 
 
-@app.route(route="v1/health", methods=["GET"])
+@app.route(route="api/v1/health", methods=["GET"])
 def health(req: func.HttpRequest) -> func.HttpResponse:
     """Report API readiness without exposing configuration or customer data."""
     return func.HttpResponse(
@@ -19,20 +22,28 @@ def health(req: func.HttpRequest) -> func.HttpResponse:
     )
 
 
-@app.route(route="v1/install/web-package", methods=["GET"])
-def web_package(req: func.HttpRequest) -> func.HttpResponse:
-    """Provide the immutable CRM PWA package during customer installation."""
-    package_path = Path(__file__).resolve().parent / "crm-web.zip"
-    if not package_path.is_file():
+@app.route(route="{*path}", methods=["GET"])
+def web(req: func.HttpRequest) -> func.HttpResponse:
+    """Serve the compiled customer-owned PWA and its static assets."""
+    requested_path = req.route_params.get("path", "").lstrip("/")
+    candidate = resolve_web_asset(WEB_ROOT, requested_path)
+    if candidate is None:
         return func.HttpResponse(
-            body=json.dumps({"error": "The CRM web package is unavailable."}),
-            status_code=503,
-            mimetype="application/json",
+            body="Not found",
+            status_code=404,
+            mimetype="text/plain",
         )
 
+    if not candidate.is_file():
+        return func.HttpResponse(
+            body="The CRM PWA is unavailable.",
+            status_code=503,
+            mimetype="text/plain",
+        )
+
+    content_type, _ = mimetypes.guess_type(candidate.name)
     return func.HttpResponse(
-        body=package_path.read_bytes(),
+        body=candidate.read_bytes(),
         status_code=200,
-        mimetype="application/zip",
-        headers={"Content-Disposition": 'attachment; filename="crm-web.zip"'},
+        mimetype=content_type or "application/octet-stream",
     )

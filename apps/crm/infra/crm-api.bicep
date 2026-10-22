@@ -236,6 +236,12 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
     }
     siteConfig: {
       minTlsVersion: '1.2'
+      cors: {
+        allowedOrigins: [
+          'https://toolkit.thelenders.app'
+        ]
+        supportCredentials: false
+      }
       appSettings: [
         {
           name: 'AzureWebJobsStorage__credential'

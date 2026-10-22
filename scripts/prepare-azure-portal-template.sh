@@ -19,8 +19,7 @@ az bicep build \
 
 jq \
   --arg api "${release_base}/released-package.zip" \
-  --arg web "${release_base}/crm-web.zip" \
-  '.parameters.functionPackageUri.defaultValue = $api | .parameters.webPackageUri.defaultValue = $web' \
+  '.parameters.functionPackageUri.defaultValue = $api' \
   "${temporary_template}" \
   > "${template_path}"
 

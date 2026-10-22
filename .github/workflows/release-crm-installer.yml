@@ -29,14 +29,13 @@ jobs:
       - name: Verify customer-hosted PWA package
         run: |
           unzip -t dist/azure-installer/crm-web.zip
-          unzip -l dist/azure-installer/released-package.zip | grep -q 'crm-web.zip'
+          unzip -l dist/azure-installer/released-package.zip | grep -q 'web/index.html'
 
       - name: Verify the committed Azure Portal template
         env:
           RELEASE_BASE: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}
         run: |
           test "$(jq -r '.parameters.functionPackageUri.defaultValue' apps/crm/infra/azuredeploy.json)" = "${RELEASE_BASE}/released-package.zip"
-          test "$(jq -r '.parameters.webPackageUri.defaultValue' apps/crm/infra/azuredeploy.json)" = "${RELEASE_BASE}/crm-web.zip"
           cp apps/crm/infra/azuredeploy.json dist/azure-installer/azuredeploy.json
 
       - name: Create checksums and Azure deployment link

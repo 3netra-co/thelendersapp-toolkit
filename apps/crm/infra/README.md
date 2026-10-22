@@ -41,7 +41,7 @@ az deployment sub what-if \
   --parameters location=<resource-location> installationName=<installation-name>
 ```
 
-The current entry point creates the resource group, Standard CRM Static Web App, CRM API
+The current entry point creates the resource group, Function-hosted CRM PWA/API
 foundation, one StorageV2 account, managed identity, and storage role
 assignments. The storage account supplies the CRM data foundation without a
 database server:
@@ -58,31 +58,25 @@ database server:
 The entry point returns the generated CRM application URL, API URL, storage
 account, blob containers, queues, and tables as deployment outputs.
 
-The Static Web App uses the Standard plan because Azure requires Standard for
-linking the separately managed Function App. Bicep declares that link rather
-than leaving it as a portal-only setup step. The link keeps browser requests on
-the PWA's `/api` route while the Function App retains non-HTTP queue and
-scheduled work. The installer must disclose this fixed hosting charge before
-deployment.
+The Flex Consumption Function App serves both the compiled PWA and the CRM API
+from one Azure-generated HTTPS address. This makes the first installation
+atomic: when Bicep reports success, the customer URL already contains the PWA
+and `/api` endpoints. It also avoids a fixed Static Web Apps Standard charge.
+Static Web Apps or another front-end host can be added later without changing
+the customer data model or API boundaries.
 
 The template requires immutable public HTTPS URLs for two release artifacts:
 
-- `released-package.zip` contains the Python Function project and an immutable
-  copy of `crm-web.zip` at the ZIP root. The installation-only Function route
-  serves that copy from the customer's own Azure Function App so Static Web
-  Apps does not have to follow a third-party release redirect.
+- `released-package.zip` contains the Python Function project and the compiled
+  PWA under `web/` at the ZIP root.
 - `crm-web.zip` contains the compiled PWA at the ZIP root.
 
-The Function package is published with Azure Functions One Deploy. After the
-Bicep deployment succeeds, the browser installer uses the customer's temporary
-Azure Resource Manager authorization to invoke Microsoft's Static Web Apps ZIP
-deployment operation with the package served directly by the customer's new
-Function App. The separately published `crm-web.zip` remains available for
-inspection and alternative deployment tooling. This avoids third-party
-redirects during Azure publication and also avoids
-deployment scripts, Azure Container Instances, customer deployment tokens, and
-an operated Toolkit runtime inside the customer's subscription. The browser
-does not persist the Azure access token.
+The Function package is published with Azure Functions One Deploy. The
+separately published `crm-web.zip` remains available for inspection and
+alternative deployment tooling. The installation avoids deployment scripts,
+Azure Container Instances, customer deployment tokens, and an operated Toolkit
+runtime inside the customer's subscription. The browser does not persist the
+Azure access token.
 
 Customer identity registration and application-level cost controls remain
 later slices. They must be present before the CRM handles confidential data.

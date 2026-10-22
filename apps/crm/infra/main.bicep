@@ -18,9 +18,6 @@ param environmentName string = 'production'
 @description('Public HTTPS URL of the versioned Azure Functions source package. The file name must be released-package.zip.')
 param functionPackageUri string
 
-@description('Public HTTPS URL of the versioned compiled CRM PWA package.')
-param webPackageUri string
-
 var resourceGroupName = 'rg-${installationName}-crm-${environmentName}'
 var tags = {
   product: 'thelendersapp-toolkit-crm'
@@ -46,26 +43,13 @@ module crmApi 'crm-api.bicep' = {
   }
 }
 
-module crmWeb 'crm-web.bicep' = {
-  name: 'crm-web'
-  scope: crmResourceGroup
-  params: {
-    location: location
-    environmentName: environmentName
-    installationName: installationName
-    functionAppResourceId: crmApi.outputs.functionAppId
-    functionAppRegion: location
-  }
-}
-
 output resourceGroupName string = crmResourceGroup.name
 output crmApiName string = crmApi.outputs.functionAppName
 output crmApiResourceId string = crmApi.outputs.functionAppId
 output crmApiUrl string = crmApi.outputs.functionAppUrl
-output crmApplicationName string = crmWeb.outputs.staticWebAppName
-output crmApplicationUrl string = crmWeb.outputs.applicationUrl
-output crmApplicationPlan string = crmWeb.outputs.hostingPlan
-output crmLinkedApiResourceId string = crmWeb.outputs.linkedApiResourceId
+output crmApplicationName string = crmApi.outputs.functionAppName
+output crmApplicationUrl string = crmApi.outputs.functionAppUrl
+output crmApplicationPlan string = 'FlexConsumption'
 output storageAccountName string = crmApi.outputs.runtimeStorageName
 output blobContainerNames array = crmApi.outputs.blobContainerNames
 output queueNames array = crmApi.outputs.queueNames
@@ -74,4 +58,3 @@ output applicationInsightsName string = crmApi.outputs.applicationInsightsName
 output logAnalyticsWorkspaceName string = crmApi.outputs.logAnalyticsWorkspaceName
 output runtimeName string = crmApi.outputs.runtimeName
 output runtimeVersion string = crmApi.outputs.runtimeVersion
-output crmWebPackageUri string = webPackageUri

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.46.1.21595",
-      "templateHash": "14124926491400063137"
+      "templateHash": "3169454724513643740"
     }
   },
   "parameters": {
@@ -39,14 +39,7 @@
       "metadata": {
         "description": "Public HTTPS URL of the versioned Azure Functions source package. The file name must be released-package.zip."
       },
-      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.4/released-package.zip"
-    },
-    "webPackageUri": {
-      "type": "string",
-      "metadata": {
-        "description": "Public HTTPS URL of the versioned compiled CRM PWA package."
-      },
-      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.4/crm-web.zip"
+      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.5/released-package.zip"
     }
   },
   "variables": {
@@ -97,7 +90,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.46.1.21595",
-              "templateHash": "9484027172416064184"
+              "templateHash": "10129868892607445827"
             }
           },
           "parameters": {
@@ -410,6 +403,12 @@
                 },
                 "siteConfig": {
                   "minTlsVersion": "1.2",
+                  "cors": {
+                    "allowedOrigins": [
+                      "https://toolkit.thelenders.app"
+                    ],
+                    "supportCredentials": false
+                  },
                   "appSettings": [
                     {
                       "name": "AzureWebJobsStorage__credential",
@@ -559,149 +558,6 @@
       "dependsOn": [
         "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
       ]
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2025-04-01",
-      "name": "crm-web",
-      "resourceGroup": "[variables('resourceGroupName')]",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "environmentName": {
-            "value": "[parameters('environmentName')]"
-          },
-          "installationName": {
-            "value": "[parameters('installationName')]"
-          },
-          "functionAppResourceId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.functionAppId.value]"
-          },
-          "functionAppRegion": {
-            "value": "[parameters('location')]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.46.1.21595",
-              "templateHash": "4337936607438030928"
-            }
-          },
-          "parameters": {
-            "location": {
-              "type": "string",
-              "metadata": {
-                "description": "Azure region for the customer-owned CRM web application."
-              }
-            },
-            "environmentName": {
-              "type": "string",
-              "allowedValues": [
-                "development",
-                "production"
-              ],
-              "metadata": {
-                "description": "Durable environment name used for tags and resource names."
-              }
-            },
-            "installationName": {
-              "type": "string",
-              "metadata": {
-                "description": "Installation name chosen by the customer."
-              }
-            },
-            "functionAppResourceId": {
-              "type": "string",
-              "metadata": {
-                "description": "Resource ID of the customer-owned CRM Function App linked at the /api route."
-              }
-            },
-            "functionAppRegion": {
-              "type": "string",
-              "metadata": {
-                "description": "Azure region containing the linked CRM Function App."
-              }
-            },
-            "staticWebAppName": {
-              "type": "string",
-              "defaultValue": "[format('stapp-{0}-crm-{1}-{2}', parameters('installationName'), parameters('environmentName'), take(uniqueString(subscription().id, resourceGroup().id), 6))]",
-              "metadata": {
-                "description": "Globally unique Static Web App name for the customer CRM."
-              }
-            }
-          },
-          "variables": {
-            "tags": {
-              "product": "thelendersapp-toolkit-crm",
-              "environment": "[parameters('environmentName')]",
-              "managed-by": "bicep",
-              "purpose": "customer-crm-web",
-              "installation": "[parameters('installationName')]"
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Web/staticSites",
-              "apiVersion": "2023-12-01",
-              "name": "[parameters('staticWebAppName')]",
-              "location": "[parameters('location')]",
-              "tags": "[variables('tags')]",
-              "sku": {
-                "name": "Standard",
-                "tier": "Standard"
-              },
-              "properties": {
-                "allowConfigFileUpdates": true,
-                "stagingEnvironmentPolicy": "Enabled"
-              }
-            },
-            {
-              "type": "Microsoft.Web/staticSites/linkedBackends",
-              "apiVersion": "2023-12-01",
-              "name": "[format('{0}/{1}', parameters('staticWebAppName'), last(split(parameters('functionAppResourceId'), '/')))]",
-              "properties": {
-                "backendResourceId": "[parameters('functionAppResourceId')]",
-                "region": "[parameters('functionAppRegion')]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName'))]"
-              ]
-            }
-          ],
-          "outputs": {
-            "staticWebAppName": {
-              "type": "string",
-              "value": "[parameters('staticWebAppName')]"
-            },
-            "applicationUrl": {
-              "type": "string",
-              "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName')), '2023-12-01').defaultHostname)]"
-            },
-            "hostingPlan": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName')), '2023-12-01', 'full').sku.name]"
-            },
-            "linkedApiResourceId": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.Web/staticSites/linkedBackends', parameters('staticWebAppName'), last(split(parameters('functionAppResourceId'), '/'))), '2023-12-01').backendResourceId]"
-            }
-          }
-        }
-      },
-      "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api')]",
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
-      ]
     }
   ],
   "outputs": {
@@ -723,19 +579,15 @@
     },
     "crmApplicationName": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-web'), '2025-04-01').outputs.staticWebAppName.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.functionAppName.value]"
     },
     "crmApplicationUrl": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-web'), '2025-04-01').outputs.applicationUrl.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.functionAppUrl.value]"
     },
     "crmApplicationPlan": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-web'), '2025-04-01').outputs.hostingPlan.value]"
-    },
-    "crmLinkedApiResourceId": {
-      "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-web'), '2025-04-01').outputs.linkedApiResourceId.value]"
+      "value": "FlexConsumption"
     },
     "storageAccountName": {
       "type": "string",
@@ -768,10 +620,6 @@
     "runtimeVersion": {
       "type": "string",
       "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'crm-api'), '2025-04-01').outputs.runtimeVersion.value]"
-    },
-    "crmWebPackageUri": {
-      "type": "string",
-      "value": "[parameters('webPackageUri')]"
     }
   }
 }
