@@ -70,13 +70,13 @@ The template requires immutable public HTTPS URLs for two release artifacts:
 - `released-package.zip` contains the Python Function project at the ZIP root.
 - `crm-web.zip` contains the compiled PWA at the ZIP root.
 
-The Function package is published with Azure Functions One Deploy. The PWA is
-published with Microsoft's Static Web Apps CLI and the new app's deployment
-token, obtained at deployment time by a customer-owned installer identity. The
-token is neither emitted nor retained by the installer. The identity receives
-Contributor access only on the new Static Web App; it has no access to other
-customer resources. The deployment does not report success until the PWA's
-Toolkit-specific marker and its `/api/v1/health` route both respond.
+The Function package is published with Azure Functions One Deploy. After the
+Bicep deployment succeeds, the browser installer uses the customer's temporary
+Azure Resource Manager authorization to invoke Microsoft's Static Web Apps ZIP
+deployment operation with the immutable public `crm-web.zip` URL. This avoids
+deployment scripts, Azure Container Instances, customer deployment tokens, and
+an operated Toolkit runtime inside the customer's subscription. The browser
+does not persist the Azure access token.
 
 Customer identity registration and application-level cost controls remain
 later slices. They must be present before the CRM handles confidential data.

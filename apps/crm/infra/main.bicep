@@ -55,7 +55,6 @@ module crmWeb 'crm-web.bicep' = {
     installationName: installationName
     functionAppResourceId: crmApi.outputs.functionAppId
     functionAppRegion: location
-    webPackageUri: webPackageUri
   }
 }
 
@@ -75,4 +74,4 @@ output applicationInsightsName string = crmApi.outputs.applicationInsightsName
 output logAnalyticsWorkspaceName string = crmApi.outputs.logAnalyticsWorkspaceName
 output runtimeName string = crmApi.outputs.runtimeName
 output runtimeVersion string = crmApi.outputs.runtimeVersion
-output installerIdentityName string = crmWeb.outputs.installerIdentityName
+output crmWebPackageUri string = webPackageUri

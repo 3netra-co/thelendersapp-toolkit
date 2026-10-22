@@ -45,8 +45,11 @@ Exit test: a clean temporary resource group can be created twice without duplica
 resources, and the second deployment is an update rather than a replacement.
 
 Current implementation note: the versioned installer also publishes the Python
-Function and compiled PWA packages. A deployment is treated as healthy only
-after both the PWA root and `/api/v1/health` respond.
+Function package. After Bicep completes, the browser installer publishes the
+compiled PWA through Azure Resource Manager's Static Web Apps ZIP deployment
+operation. No customer container or deployment-script resource is created. A
+deployment is treated as healthy only after both the PWA root and
+`/api/v1/health` respond.
 
 ### Slice 3: Customer-owned identity
 
