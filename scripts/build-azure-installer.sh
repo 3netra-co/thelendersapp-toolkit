@@ -10,15 +10,6 @@ web_dir="${repo_root}/apps/crm/web"
 rm -rf "${release_dir}"
 mkdir -p "${release_dir}/api-package" "${release_dir}/web-package"
 
-cp "${api_dir}/function_app.py" "${api_dir}/host.json" "${api_dir}/requirements.txt" "${release_dir}/api-package/"
-cp -R "${api_dir}/crm_api" "${release_dir}/api-package/crm_api"
-
-(
-  cd "${release_dir}/api-package"
-  zip -q -r "${release_dir}/released-package.zip" . \
-    -x '*/__pycache__/*' '*.pyc'
-)
-
 (
   cd "${web_dir}"
   npm ci
@@ -26,6 +17,16 @@ cp -R "${api_dir}/crm_api" "${release_dir}/api-package/crm_api"
   npm run build
   cd dist/web
   zip -q -r "${release_dir}/crm-web.zip" .
+)
+
+cp "${api_dir}/function_app.py" "${api_dir}/host.json" "${api_dir}/requirements.txt" "${release_dir}/api-package/"
+cp "${release_dir}/crm-web.zip" "${release_dir}/api-package/crm-web.zip"
+cp -R "${api_dir}/crm_api" "${release_dir}/api-package/crm_api"
+
+(
+  cd "${release_dir}/api-package"
+  zip -q -r "${release_dir}/released-package.zip" . \
+    -x '*/__pycache__/*' '*.pyc'
 )
 
 az bicep build \

@@ -39,14 +39,14 @@
       "metadata": {
         "description": "Public HTTPS URL of the versioned Azure Functions source package. The file name must be released-package.zip."
       },
-      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.3/released-package.zip"
+      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.4/released-package.zip"
     },
     "webPackageUri": {
       "type": "string",
       "metadata": {
         "description": "Public HTTPS URL of the versioned compiled CRM PWA package."
       },
-      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.3/crm-web.zip"
+      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.4/crm-web.zip"
     }
   },
   "variables": {

@@ -26,6 +26,11 @@ jobs:
       - name: Build application and installer artifacts
         run: ./scripts/build-azure-installer.sh
 
+      - name: Verify customer-hosted PWA package
+        run: |
+          unzip -t dist/azure-installer/crm-web.zip
+          unzip -l dist/azure-installer/released-package.zip | grep -q 'crm-web.zip'
+
       - name: Verify the committed Azure Portal template
         env:
           RELEASE_BASE: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}

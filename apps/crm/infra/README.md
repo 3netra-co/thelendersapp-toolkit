@@ -67,13 +67,19 @@ deployment.
 
 The template requires immutable public HTTPS URLs for two release artifacts:
 
-- `released-package.zip` contains the Python Function project at the ZIP root.
+- `released-package.zip` contains the Python Function project and an immutable
+  copy of `crm-web.zip` at the ZIP root. The installation-only Function route
+  serves that copy from the customer's own Azure Function App so Static Web
+  Apps does not have to follow a third-party release redirect.
 - `crm-web.zip` contains the compiled PWA at the ZIP root.
 
 The Function package is published with Azure Functions One Deploy. After the
 Bicep deployment succeeds, the browser installer uses the customer's temporary
 Azure Resource Manager authorization to invoke Microsoft's Static Web Apps ZIP
-deployment operation with the immutable public `crm-web.zip` URL. This avoids
+deployment operation with the package served directly by the customer's new
+Function App. The separately published `crm-web.zip` remains available for
+inspection and alternative deployment tooling. This avoids third-party
+redirects during Azure publication and also avoids
 deployment scripts, Azure Container Instances, customer deployment tokens, and
 an operated Toolkit runtime inside the customer's subscription. The browser
 does not persist the Azure access token.
