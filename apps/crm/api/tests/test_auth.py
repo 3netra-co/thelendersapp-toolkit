@@ -65,6 +65,10 @@ class AuthenticationHelpersTests(TestCase):
 
         self.assertEqual(user.tenant_id, "approved-tenant")
         self.assertEqual(user.object_id, "user-id")
+        jwk_client.assert_called_once_with(
+            "https://login.microsoftonline.com/approved-tenant/discovery/v2.0/keys",
+            cache_keys=True,
+        )
         decode.assert_called_once_with(
             "token",
             "test-key",

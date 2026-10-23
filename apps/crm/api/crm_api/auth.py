@@ -46,8 +46,9 @@ def validate_access_token(token: str) -> AuthenticatedUser:
     configuration = entra_configuration()
     tenant_id = configuration["tenantId"]
     client_id = configuration["clientId"]
-    issuer = f"https://login.microsoftonline.com/{tenant_id}/v2.0"
-    signing_keys = PyJWKClient(f"{issuer}/discovery/v2.0/keys", cache_keys=True)
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
+    issuer = f"{authority}/v2.0"
+    signing_keys = PyJWKClient(f"{authority}/discovery/v2.0/keys", cache_keys=True)
 
     try:
         claims = jwt.decode(
