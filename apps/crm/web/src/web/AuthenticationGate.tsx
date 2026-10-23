@@ -37,14 +37,15 @@ export function AuthenticationGate({ children }: AuthenticationGateProps) {
           auth: {
             clientId: nextConfiguration.clientId,
             authority: `https://login.microsoftonline.com/${nextConfiguration.tenantId}`,
-            redirectUri: window.location.origin,
-            postLogoutRedirectUri: window.location.origin,
+            redirectUri: `${window.location.origin}/`,
+            postLogoutRedirectUri: `${window.location.origin}/`,
             navigateToLoginRequestUrl: false,
           },
           cache: { cacheLocation: "localStorage" },
         });
         await nextClient.initialize();
-        const existingAccount = nextClient.getAllAccounts()[0];
+        const redirectResult = await nextClient.handleRedirectPromise();
+        const existingAccount = redirectResult?.account ?? nextClient.getAllAccounts()[0];
         if (!active) return;
         setConfiguration(nextConfiguration);
         setClient(nextClient);
@@ -72,14 +73,12 @@ export function AuthenticationGate({ children }: AuthenticationGateProps) {
   const signIn = async () => {
     if (!client || !configuration) return;
     setError("");
-    setStatus("Waiting for Microsoft sign-in…");
+    setStatus("Opening Microsoft sign-in…");
     try {
-      const result = await client.loginPopup({
+      await client.loginRedirect({
         scopes: [configuration.scope],
         prompt: "select_account",
       });
-      setAccount(result.account);
-      setStatus("Confirming your CRM access…");
     } catch (caught) {
       setStatus("Microsoft sign-in is required.");
       setError(caught instanceof Error ? caught.message : "Microsoft sign-in did not complete.");
@@ -128,7 +127,7 @@ function friendlyError(message: string) {
   if (message.includes("AADSTS50020") || message.toLowerCase().includes("tenant")) {
     return "This Microsoft account does not belong to the Entra organization that owns this CRM.";
   }
-  if (message.includes("user_cancelled") || message.includes("popup_window_error")) {
+  if (message.includes("user_cancelled")) {
     return "Microsoft sign-in was closed before it finished. Try again when ready.";
   }
   return message;

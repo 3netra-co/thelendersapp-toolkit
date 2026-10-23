@@ -78,8 +78,14 @@ def web(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     content_type, _ = mimetypes.guess_type(candidate.name)
+    cache_control = (
+        "public, max-age=31536000, immutable"
+        if requested_path.startswith("assets/")
+        else "no-cache"
+    )
     return func.HttpResponse(
         body=candidate.read_bytes(),
         status_code=200,
         mimetype=content_type or "application/octet-stream",
+        headers={"Cache-Control": cache_control},
     )
