@@ -3,4 +3,5 @@ azure-data-tables>=12.7,<13
 azure-identity>=1.19,<2
 azure-storage-blob>=12.24,<13
 azure-storage-queue>=12.12,<13
+PyJWT[crypto]>=2.10,<3
 

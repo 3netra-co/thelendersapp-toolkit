@@ -16,6 +16,12 @@ param installationName string
 @description('Public HTTPS URL of the versioned Function source package. The file name must be released-package.zip.')
 param functionPackageUri string
 
+@description('Microsoft Entra tenant allowed to authenticate to this CRM.')
+param entraTenantId string
+
+@description('Multi-tenant CRM sign-in application client ID.')
+param entraClientId string
+
 @description('Globally unique customer CRM Function App name.')
 param functionAppName string = 'func-${installationName}-crm-${environmentName}-${take(uniqueString(subscription().id, resourceGroup().id), 6)}'
 
@@ -254,6 +260,14 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         {
           name: 'CRM_STORAGE_ACCOUNT_NAME'
           value: runtimeStorage.name
+        }
+        {
+          name: 'CRM_ENTRA_TENANT_ID'
+          value: entraTenantId
+        }
+        {
+          name: 'CRM_ENTRA_CLIENT_ID'
+          value: entraClientId
         }
         {
           name: 'AzureWebJobsFeatureFlags'

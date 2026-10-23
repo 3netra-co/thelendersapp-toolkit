@@ -1,10 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { AuthenticationGate } from "./AuthenticationGate";
 import "./styles.css";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode><App /></StrictMode>,
+  <StrictMode><AuthenticationGate><App /></AuthenticationGate></StrictMode>,
 );
 
 if ("serviceWorker" in navigator && import.meta.env.PROD) {

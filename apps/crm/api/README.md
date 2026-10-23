@@ -48,3 +48,16 @@ function defines its required settings.
 The health endpoint contains no configuration or customer data and can remain
 anonymous. Business endpoints must not inherit that assumption: they will
 require a validated customer Entra token and server-side role checks.
+
+The authentication foundation currently exposes:
+
+```text
+GET /api/v1/health   anonymous deployment health
+GET /api/v1/config   public tenant/client values required for sign-in
+GET /api/v1/session  validated CRM.Access token required
+```
+
+`/api/v1/session` validates the Microsoft signature, issuer, audience, expiry,
+deployment tenant, delegated CRM scope, and immutable Entra object ID. It does
+not yet create an organization or staff record; that belongs to the separate
+first-owner initialization slice.
