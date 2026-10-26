@@ -24,7 +24,8 @@ class AuthenticatedUser:
 def entra_configuration() -> dict[str, str]:
     tenant_id = os.environ.get("CRM_ENTRA_TENANT_ID", "").strip()
     client_id = os.environ.get("CRM_ENTRA_CLIENT_ID", "").strip()
-    if not tenant_id or not client_id:
+    bootstrap_owner_id = os.environ.get("CRM_BOOTSTRAP_OWNER_OBJECT_ID", "").strip()
+    if not tenant_id or not client_id or not bootstrap_owner_id:
         raise RuntimeError("CRM Entra authentication is not configured.")
     return {
         "tenantId": tenant_id,
@@ -70,6 +71,13 @@ def validate_access_token(token: str) -> AuthenticatedUser:
     object_id = str(claims.get("oid", "")).strip()
     if not object_id:
         raise AuthenticationError("Microsoft did not identify the signed-in user.")
+    approved_object_ids = {
+        value.strip()
+        for value in os.environ.get("CRM_BOOTSTRAP_OWNER_OBJECT_ID", "").split(",")
+        if value.strip()
+    }
+    if object_id not in approved_object_ids:
+        raise AuthenticationError("This Microsoft user has not been approved for this CRM.")
 
     return AuthenticatedUser(
         tenant_id=tenant_id,

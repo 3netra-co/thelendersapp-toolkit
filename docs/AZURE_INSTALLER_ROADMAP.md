@@ -13,7 +13,9 @@ it is not part of this repository or the customer's runtime data path.
   deployment-review UI contributed with the offering.
 - Python provides the Azure Functions API, event handlers, projection workers,
   scheduled jobs, and future integration adapters.
-- Bicep defines customer-owned Azure and supported Microsoft Entra resources.
+- Bicep defines customer-owned Azure resources. Microsoft Graph creates the
+  customer-owned Entra application because an app registration is a tenant
+  directory object, not an Azure Resource Manager resource.
 - The earlier Docker/SQLite proof has been removed. It is not part of the Azure
   product or development path.
 
@@ -53,10 +55,16 @@ root and `/api/v1/health` respond.
 ### Slice 3: Customer-owned identity
 
 - tenant and permission preflight
-- customer-owned Entra web and API registrations
+- one customer-owned, single-tenant Entra application registration and its
+  service principal
 - authorization-code-with-PKCE sign-in from the PWA
 - API token validation and tenant restriction
 - no customer secret or long-lived Azure token retained by the installer
+
+The exact creation, configuration, consent, and cleanup sequence is defined in
+[`CUSTOMER_OWNED_ENTRA.md`](./CUSTOMER_OWNED_ENTRA.md). The Toolkit installer
+application and every installed CRM application have different client IDs and
+different owners.
 
 Exit test: the first administrator can sign in, while a user from an
 unapproved tenant cannot call a protected API.

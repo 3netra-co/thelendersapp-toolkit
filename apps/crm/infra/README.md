@@ -56,7 +56,10 @@ database server:
   a failure loop cannot create unbounded telemetry charges.
 
 The entry point returns the generated CRM application URL, API URL, storage
-account, blob containers, queues, and tables as deployment outputs.
+account, blob containers, queues, and tables as deployment outputs. It does not
+accept an Entra tenant or application client ID. Identity is deliberately
+configured after Azure returns the customer CRM URL, using an application
+registration created in that customer's tenant.
 
 The Flex Consumption Function App serves both the compiled PWA and the CRM API
 from one Azure-generated HTTPS address. This makes the first installation
@@ -78,8 +81,10 @@ Azure Container Instances, customer deployment tokens, and an operated Toolkit
 runtime inside the customer's subscription. The browser does not persist the
 Azure access token.
 
-Customer identity registration and application-level cost controls remain
-later slices. They must be present before the CRM handles confidential data.
+The customer-owned identity sequence and its ownership boundary are defined in
+[`docs/CUSTOMER_OWNED_ENTRA.md`](../../../docs/CUSTOMER_OWNED_ENTRA.md).
+Authentication must be configured and verified before the CRM handles
+confidential data.
 
 ## Build a versioned installer
 

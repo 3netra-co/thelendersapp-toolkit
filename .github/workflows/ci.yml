@@ -53,3 +53,13 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Compile Bicep templates
         run: az bicep build --file apps/crm/infra/main.bicep --stdout > /dev/null
+      - name: Verify customer-owned identity boundary
+        run: |
+          if jq -e '.parameters | has("entraTenantId") or has("entraClientId")' apps/crm/infra/azuredeploy.json > /dev/null; then
+            echo "The base CRM deployment must not accept Toolkit or customer Entra identifiers."
+            exit 1
+          fi
+          if rg -F "ab8cf08b-020d-4f6e-b1cb-d6a66e3a6c1c" apps/crm; then
+            echo "The public CRM must not contain the private Toolkit installer client ID."
+            exit 1
+          fi

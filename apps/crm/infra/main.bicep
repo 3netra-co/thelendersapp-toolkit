@@ -18,12 +18,6 @@ param environmentName string = 'production'
 @description('Public HTTPS URL of the versioned Azure Functions source package. The file name must be released-package.zip.')
 param functionPackageUri string
 
-@description('Microsoft Entra tenant allowed to authenticate to this CRM.')
-param entraTenantId string
-
-@description('Multi-tenant CRM sign-in application client ID.')
-param entraClientId string
-
 var resourceGroupName = 'rg-${installationName}-crm-${environmentName}'
 var tags = {
   product: 'thelendersapp-toolkit-crm'
@@ -46,8 +40,6 @@ module crmApi 'crm-api.bicep' = {
     environmentName: environmentName
     installationName: installationName
     functionPackageUri: functionPackageUri
-    entraTenantId: entraTenantId
-    entraClientId: entraClientId
   }
 }
 

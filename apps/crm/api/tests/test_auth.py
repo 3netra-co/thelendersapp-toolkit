@@ -15,6 +15,7 @@ class AuthenticationHelpersTests(TestCase):
     @mock.patch.dict(os.environ, {
         "CRM_ENTRA_TENANT_ID": "tenant-id",
         "CRM_ENTRA_CLIENT_ID": "client-id",
+        "CRM_BOOTSTRAP_OWNER_OBJECT_ID": "owner-id",
     }, clear=True)
     def test_returns_public_entra_configuration(self) -> None:
         self.assertEqual(entra_configuration(), {
@@ -33,6 +34,7 @@ class AuthenticationHelpersTests(TestCase):
     @mock.patch.dict(os.environ, {
         "CRM_ENTRA_TENANT_ID": "approved-tenant",
         "CRM_ENTRA_CLIENT_ID": "client-id",
+        "CRM_BOOTSTRAP_OWNER_OBJECT_ID": "user-id",
     }, clear=True)
     def test_rejects_token_from_another_tenant(self, decode, jwk_client) -> None:
         jwk_client.return_value.get_signing_key_from_jwt.return_value.key = "test-key"
@@ -50,6 +52,7 @@ class AuthenticationHelpersTests(TestCase):
     @mock.patch.dict(os.environ, {
         "CRM_ENTRA_TENANT_ID": "approved-tenant",
         "CRM_ENTRA_CLIENT_ID": "client-id",
+        "CRM_BOOTSTRAP_OWNER_OBJECT_ID": "user-id",
     }, clear=True)
     def test_accepts_approved_tenant_and_scope(self, decode, jwk_client) -> None:
         jwk_client.return_value.get_signing_key_from_jwt.return_value.key = "test-key"
@@ -77,3 +80,21 @@ class AuthenticationHelpersTests(TestCase):
             issuer="https://login.microsoftonline.com/approved-tenant/v2.0",
             options={"require": ["aud", "exp", "iat", "iss", "tid"]},
         )
+
+    @mock.patch("crm_api.auth.PyJWKClient")
+    @mock.patch("crm_api.auth.jwt.decode")
+    @mock.patch.dict(os.environ, {
+        "CRM_ENTRA_TENANT_ID": "approved-tenant",
+        "CRM_ENTRA_CLIENT_ID": "client-id",
+        "CRM_BOOTSTRAP_OWNER_OBJECT_ID": "approved-user",
+    }, clear=True)
+    def test_rejects_unapproved_user_from_approved_tenant(self, decode, jwk_client) -> None:
+        jwk_client.return_value.get_signing_key_from_jwt.return_value.key = "test-key"
+        decode.return_value = {
+            "tid": "approved-tenant",
+            "oid": "other-user",
+            "scp": "CRM.Access",
+        }
+
+        with self.assertRaisesRegex(AuthenticationError, "not been approved"):
+            validate_access_token("token")

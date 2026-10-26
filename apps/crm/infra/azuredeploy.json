@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.46.1.21595",
-      "templateHash": "12121119153782123792"
+      "templateHash": "2740041456981835205"
     }
   },
   "parameters": {
@@ -39,19 +39,7 @@
       "metadata": {
         "description": "Public HTTPS URL of the versioned Azure Functions source package. The file name must be released-package.zip."
       },
-      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.8/released-package.zip"
-    },
-    "entraTenantId": {
-      "type": "string",
-      "metadata": {
-        "description": "Microsoft Entra tenant allowed to authenticate to this CRM."
-      }
-    },
-    "entraClientId": {
-      "type": "string",
-      "metadata": {
-        "description": "Multi-tenant CRM sign-in application client ID."
-      }
+      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.9/released-package.zip"
     }
   },
   "variables": {
@@ -93,12 +81,6 @@
           },
           "functionPackageUri": {
             "value": "[parameters('functionPackageUri')]"
-          },
-          "entraTenantId": {
-            "value": "[parameters('entraTenantId')]"
-          },
-          "entraClientId": {
-            "value": "[parameters('entraClientId')]"
           }
         },
         "template": {
@@ -108,7 +90,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.46.1.21595",
-              "templateHash": "11747912606718328667"
+              "templateHash": "9484027172416064184"
             }
           },
           "parameters": {
@@ -142,18 +124,6 @@
               "type": "string",
               "metadata": {
                 "description": "Public HTTPS URL of the versioned Function source package. The file name must be released-package.zip."
-              }
-            },
-            "entraTenantId": {
-              "type": "string",
-              "metadata": {
-                "description": "Microsoft Entra tenant allowed to authenticate to this CRM."
-              }
-            },
-            "entraClientId": {
-              "type": "string",
-              "metadata": {
-                "description": "Multi-tenant CRM sign-in application client ID."
               }
             },
             "functionAppName": {
@@ -433,12 +403,6 @@
                 },
                 "siteConfig": {
                   "minTlsVersion": "1.2",
-                  "cors": {
-                    "allowedOrigins": [
-                      "https://toolkit.thelenders.app"
-                    ],
-                    "supportCredentials": false
-                  },
                   "appSettings": [
                     {
                       "name": "AzureWebJobsStorage__credential",
@@ -451,14 +415,6 @@
                     {
                       "name": "CRM_STORAGE_ACCOUNT_NAME",
                       "value": "[parameters('storageAccountName')]"
-                    },
-                    {
-                      "name": "CRM_ENTRA_TENANT_ID",
-                      "value": "[parameters('entraTenantId')]"
-                    },
-                    {
-                      "name": "CRM_ENTRA_CLIENT_ID",
-                      "value": "[parameters('entraClientId')]"
                     },
                     {
                       "name": "AzureWebJobsFeatureFlags",

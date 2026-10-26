@@ -64,3 +64,36 @@
   background: #fff1f1;
   line-height: 1.45;
 }
+
+.authentication-session {
+  position: fixed;
+  z-index: 1000;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.65rem 0.75rem 0.65rem 1rem;
+  border: 1px solid #cddfde;
+  border-radius: 999px;
+  color: #385462;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0.75rem 2rem rgba(10, 42, 61, 0.14);
+  font-size: 0.82rem;
+}
+
+.authentication-session button {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #0d756c;
+  border-radius: 999px;
+  color: #0d756c;
+  background: transparent;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .authentication-session span { max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}

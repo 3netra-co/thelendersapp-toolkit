@@ -41,7 +41,7 @@ export function AuthenticationGate({ children }: AuthenticationGateProps) {
             postLogoutRedirectUri: `${window.location.origin}/`,
             navigateToLoginRequestUrl: false,
           },
-          cache: { cacheLocation: "localStorage" },
+          cache: { cacheLocation: "sessionStorage" },
         });
         await nextClient.initialize();
         const redirectResult = await nextClient.handleRedirectPromise();
@@ -85,7 +85,18 @@ export function AuthenticationGate({ children }: AuthenticationGateProps) {
     }
   };
 
-  if (session) return children;
+  if (session) {
+    const signedInAs = session.displayName ?? session.username ?? "Microsoft user";
+    return (
+      <>
+        <aside className="authentication-session" aria-label="Microsoft sign-in status">
+          <span>Signed in as <strong>{signedInAs}</strong></span>
+          <button type="button" onClick={() => void client?.logoutRedirect({ account })}>Sign out</button>
+        </aside>
+        {children}
+      </>
+    );
+  }
 
   return (
     <main className="authentication-shell">
