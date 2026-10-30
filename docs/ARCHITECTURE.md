@@ -19,6 +19,38 @@ verification, upgrade, export, and safe removal.
 Azure is the supported V1 reference platform. Other cloud implementations can
 be contributed when they satisfy the same capability and data contracts.
 
+## App Package + MortCode boundary
+
+The deployable product is a unified customer-owned application package, not a
+single CRM screen. CRM core, staff administration, POS, borrower portal, LOS,
+communications, and integrations remain independently replaceable modules.
+They share identity and versioned contracts; they do not share private tables.
+
+Every module publishes an `app-package.json` validated by the shared package
+schema. It declares the module's OpenAPI contract, event subscriptions and
+publications, storage resources, and application roles. This is the control
+surface for **MortCode**: automation can plan, generate, deploy, test, and
+upgrade modules from explicit contracts instead of inferring infrastructure or
+receiving unrestricted access to customer data.
+
+Generic boundaries are intentional; generic business storage is not. Leads,
+applications, documents, communications, and loans keep domain-owned schemas.
+This preserves compliance, useful queries, and safe module evolution while
+allowing future agents to compose workflows through APIs and events.
+
+The first reference flow includes identity and organization state:
+
+```text
+validated Entra identity
+  -> bootstrap or resolve Organization + StaffProfile + Membership
+  -> normalize lead command and preserve source payload
+  -> store LeadRecords projection + immutable LeadEvents event
+  -> emit lead.created.v1
+  -> evaluate lead-intake.v1
+  -> create assignment/task
+  -> record WorkflowRun
+```
+
 ## Client
 
 The primary client is an installable Progressive Web App. It must work in a

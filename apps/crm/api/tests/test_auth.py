@@ -88,7 +88,7 @@ class AuthenticationHelpersTests(TestCase):
         "CRM_ENTRA_CLIENT_ID": "client-id",
         "CRM_BOOTSTRAP_OWNER_OBJECT_ID": "approved-user",
     }, clear=True)
-    def test_rejects_unapproved_user_from_approved_tenant(self, decode, jwk_client) -> None:
+    def test_identity_validation_does_not_replace_membership_authorization(self, decode, jwk_client) -> None:
         jwk_client.return_value.get_signing_key_from_jwt.return_value.key = "test-key"
         decode.return_value = {
             "tid": "approved-tenant",
@@ -96,5 +96,5 @@ class AuthenticationHelpersTests(TestCase):
             "scp": "CRM.Access",
         }
 
-        with self.assertRaisesRegex(AuthenticationError, "not been approved"):
-            validate_access_token("token")
+        user = validate_access_token("token")
+        self.assertEqual(user.object_id, "other-user")

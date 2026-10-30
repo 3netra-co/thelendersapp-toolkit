@@ -71,14 +71,6 @@ def validate_access_token(token: str) -> AuthenticatedUser:
     object_id = str(claims.get("oid", "")).strip()
     if not object_id:
         raise AuthenticationError("Microsoft did not identify the signed-in user.")
-    approved_object_ids = {
-        value.strip()
-        for value in os.environ.get("CRM_BOOTSTRAP_OWNER_OBJECT_ID", "").split(",")
-        if value.strip()
-    }
-    if object_id not in approved_object_ids:
-        raise AuthenticationError("This Microsoft user has not been approved for this CRM.")
-
     return AuthenticatedUser(
         tenant_id=tenant_id,
         object_id=object_id,

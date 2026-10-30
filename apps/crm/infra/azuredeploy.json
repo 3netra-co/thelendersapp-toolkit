@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.46.1.21595",
-      "templateHash": "2740041456981835205"
+      "templateHash": "16443342007772385771"
     }
   },
   "parameters": {
@@ -39,7 +39,7 @@
       "metadata": {
         "description": "Public HTTPS URL of the versioned Azure Functions source package. The file name must be released-package.zip."
       },
-      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.1.9/released-package.zip"
+      "defaultValue": "https://github.com/3netra-co/thelendersapp-toolkit/releases/download/crm-v0.2.0/released-package.zip"
     }
   },
   "variables": {
@@ -90,7 +90,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.46.1.21595",
-              "templateHash": "9484027172416064184"
+              "templateHash": "8748268642277376085"
             }
           },
           "parameters": {
@@ -175,7 +175,14 @@
               "StaffProfiles",
               "IdentityLinks",
               "Memberships",
-              "LoginAudit"
+              "LoginAudit",
+              "LeadRecords",
+              "LeadEvents",
+              "Tasks",
+              "WorkflowDefinitions",
+              "WorkflowRuns",
+              "Connections",
+              "IdempotencyRecords"
             ],
             "storageBlobDataOwnerRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b')]",
             "storageQueueDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')]",

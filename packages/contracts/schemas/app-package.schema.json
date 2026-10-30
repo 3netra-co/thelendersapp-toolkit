@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thelenders.app/schemas/app-package.schema.json",
+  "title": "The Lenders App module package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "package", "version", "apis", "events", "storage", "permissions"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "package": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "apis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["spec", "basePath"],
+        "properties": {
+          "spec": { "type": "string", "minLength": 1 },
+          "basePath": { "type": "string", "pattern": "^/" }
+        }
+      }
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["publishes", "subscribes"],
+      "properties": {
+        "publishes": { "type": "array", "items": { "$ref": "#/$defs/event" } },
+        "subscribes": { "type": "array", "items": { "$ref": "#/$defs/event" } }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tables", "blobContainers", "queues"],
+      "properties": {
+        "tables": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "blobContainers": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "queues": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["admin", "read_write", "read_only", "system"] },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "schema"],
+      "properties": {
+        "type": { "type": "string", "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+\\.v[0-9]+$" },
+        "schema": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -44,6 +44,13 @@ var projectionTableNames = [
   'IdentityLinks'
   'Memberships'
   'LoginAudit'
+  'LeadRecords'
+  'LeadEvents'
+  'Tasks'
+  'WorkflowDefinitions'
+  'WorkflowRuns'
+  'Connections'
+  'IdempotencyRecords'
 ]
 var storageBlobDataOwnerRoleId = subscriptionResourceId(
   'Microsoft.Authorization/roleDefinitions',

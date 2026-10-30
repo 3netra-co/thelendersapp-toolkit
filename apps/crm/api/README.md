@@ -58,8 +58,18 @@ GET /api/v1/session  validated CRM.Access token required
 ```
 
 `/api/v1/session` validates the Microsoft signature, issuer, audience, expiry,
-deployment tenant, delegated CRM scope, and immutable Entra object ID. Until
-staff membership is implemented, `CRM_BOOTSTRAP_OWNER_OBJECT_ID` is a
-fail-closed allowlist containing only the installing administrator. It does not
-yet create an organization or staff record; that belongs to the separate
-first-owner initialization slice.
+deployment tenant, and delegated CRM scope. On the first request only, the
+immutable `CRM_BOOTSTRAP_OWNER_OBJECT_ID` may create the organization, default
+branch, owner staff profile, identity link, and admin membership. Every later
+request is authorized from the customer-owned `Memberships` table.
+
+The first vertical command/workflow slice is:
+
+```text
+POST /api/v1/leads (Authorization + Idempotency-Key)
+  -> normalize and preserve source payload
+  -> create LeadRecords projection and immutable LeadEvents event
+  -> emit lead.created.v1 to workflow-events
+  -> create the initial review task
+  -> record the duplicate-safe WorkflowRun
+```

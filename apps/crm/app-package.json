@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "package": "crm-core",
+  "version": "0.2.0",
+  "apis": [{ "spec": "api/openapi.yaml", "basePath": "/api/v1" }],
+  "events": {
+    "publishes": [
+      { "type": "lead.created.v1", "schema": "../../packages/contracts/schemas/event-envelope.schema.json" }
+    ],
+    "subscribes": [
+      { "type": "lead.created.v1", "schema": "../../packages/contracts/schemas/event-envelope.schema.json" }
+    ]
+  },
+  "storage": {
+    "tables": ["Organizations", "Branches", "StaffProfiles", "IdentityLinks", "Memberships", "LoginAudit", "LeadRecords", "LeadEvents", "Tasks", "WorkflowDefinitions", "WorkflowRuns", "Connections", "IdempotencyRecords"],
+    "blobContainers": ["domain-events", "source-payloads", "documents"],
+    "queues": ["projection-events", "workflow-events"]
+  },
+  "permissions": ["admin", "read_write", "read_only", "system"]
+}

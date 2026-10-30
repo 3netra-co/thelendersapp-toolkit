@@ -6,6 +6,8 @@ import azure.functions as func
 
 from crm_api.auth import AuthenticationError, bearer_token, entra_configuration, validate_access_token
 from crm_api.health import health_payload
+from crm_api.platform import AuthorizationError, CommandError, PlatformService
+from crm_api.storage import AzureStore
 from crm_api.web import resolve_web_asset
 
 
@@ -35,16 +37,14 @@ def configuration(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="api/v1/session", methods=["GET"])
 def session(req: func.HttpRequest) -> func.HttpResponse:
-    """Prove tenant-bound authentication without creating organization records."""
+    """Bootstrap the installer or resolve an existing organization membership."""
     try:
         user = validate_access_token(bearer_token(req.headers.get("Authorization")))
+        established = PlatformService(AzureStore()).establish_session(user)
     except AuthenticationError as error:
-        return func.HttpResponse(
-            body=json.dumps({"error": str(error)}),
-            status_code=401,
-            mimetype="application/json",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        return _problem(str(error), 401, authenticate=True)
+    except AuthorizationError as error:
+        return _problem(str(error), 403)
     return func.HttpResponse(
         body=json.dumps({
             "authenticated": True,
@@ -52,9 +52,77 @@ def session(req: func.HttpRequest) -> func.HttpResponse:
             "userId": user.object_id,
             "displayName": user.display_name,
             "username": user.username,
+            "organizationId": established.organization_id,
+            "staffId": established.staff_id,
+            "role": established.role,
         }),
         status_code=200,
         mimetype="application/json",
+    )
+
+
+@app.route(route="api/v1/leads", methods=["POST"])
+def create_lead(req: func.HttpRequest) -> func.HttpResponse:
+    """Accept one normalized, retry-safe lead command."""
+    try:
+        user = validate_access_token(bearer_token(req.headers.get("Authorization")))
+        service = PlatformService(AzureStore())
+        established = service.establish_session(user)
+        result = service.create_lead(
+            established, req.get_json(), req.headers.get("Idempotency-Key", "")
+        )
+    except AuthenticationError as error:
+        return _problem(str(error), 401, authenticate=True)
+    except AuthorizationError as error:
+        return _problem(str(error), 403)
+    except (CommandError, ValueError) as error:
+        return _problem(str(error), 400)
+    return func.HttpResponse(
+        body=json.dumps(result), status_code=202, mimetype="application/json"
+    )
+
+
+@app.route(route="api/v1/leads/import", methods=["POST"])
+def import_leads(req: func.HttpRequest) -> func.HttpResponse:
+    """Import up to 1,000 leads through the same command pipeline."""
+    try:
+        user = validate_access_token(bearer_token(req.headers.get("Authorization")))
+        service = PlatformService(AzureStore())
+        established = service.establish_session(user)
+        payload = req.get_json()
+        if not isinstance(payload, dict):
+            raise CommandError("Import content must be a JSON object.")
+        result = service.import_leads(
+            established,
+            payload.get("records"),
+            req.headers.get("Idempotency-Key", ""),
+            str(payload.get("defaultSource") or "import"),
+        )
+    except AuthenticationError as error:
+        return _problem(str(error), 401, authenticate=True)
+    except AuthorizationError as error:
+        return _problem(str(error), 403)
+    except (CommandError, ValueError) as error:
+        return _problem(str(error), 400)
+    return func.HttpResponse(
+        body=json.dumps(result), status_code=202, mimetype="application/json"
+    )
+
+
+@app.queue_trigger(
+    arg_name="message", queue_name="workflow-events", connection="AzureWebJobsStorage"
+)
+def workflow_event(message: func.QueueMessage) -> None:
+    """Run duplicate-tolerant workflows emitted by customer-owned modules."""
+    event = json.loads(message.get_body().decode("utf-8"))
+    PlatformService(AzureStore()).process_lead_created(event)
+
+
+def _problem(message: str, status: int, authenticate: bool = False) -> func.HttpResponse:
+    headers = {"WWW-Authenticate": "Bearer"} if authenticate else None
+    return func.HttpResponse(
+        body=json.dumps({"error": message}), status_code=status,
+        mimetype="application/json", headers=headers,
     )
 
 
