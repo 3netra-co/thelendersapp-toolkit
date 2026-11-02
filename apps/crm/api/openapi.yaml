@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: The Lenders App Core API
-  version: 0.2.0
+  version: 0.2.1
   description: Customer-owned organization, identity, lead, event, and workflow boundary.
 servers:
   - url: /api/v1
@@ -26,6 +26,12 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
   /leads:
+    get:
+      operationId: listLeads
+      responses:
+        "200": { description: Stored lead projections for the active organization }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
     post:
       operationId: createLead
       parameters:

@@ -155,6 +155,27 @@ class PlatformService:
         })
         return response
 
+    def list_leads(self, session: Session) -> list[dict[str, Any]]:
+        self.require_role(session, "admin", "read_write", "read_only")
+        records = self.store.list_partition("LeadRecords", session.organization_id)
+        records.sort(key=lambda item: str(item.get("createdAt", "")), reverse=True)
+        return [
+            {
+                "leadId": str(item["RowKey"]),
+                "firstName": str(item.get("firstName", "")),
+                "lastName": str(item.get("lastName", "")),
+                "email": str(item.get("email", "")),
+                "phone": str(item.get("phone", "")),
+                "source": str(item.get("source", "")),
+                "stage": str(item.get("stage", "new")),
+                "ownerStaffId": str(item.get("ownerStaffId", "")),
+                "requestedLoanAmount": float(item.get("requestedLoanAmount", 0)),
+                "createdAt": str(item.get("createdAt", "")),
+                "updatedAt": str(item.get("updatedAt", "")),
+            }
+            for item in records
+        ]
+
     def import_leads(
         self, session: Session, records: list[dict[str, Any]], import_key: str,
         default_source: str = "import",

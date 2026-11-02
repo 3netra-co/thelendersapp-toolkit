@@ -1,19 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useAuthenticatedApi } from "./AuthenticationGate";
 
 interface InstallPromptEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-type Lead = { id: number; name: string; initials: string; email: string; phone: string; source: string; stage: string; owner: string; updated: string; amount: string; tone: string };
-
-const leads: Lead[] = [
-  { id: 1, name: "Maya & Daniel Brooks", initials: "MB", email: "maya.brooks@example.com", phone: "(703) 555-0184", source: "MRC", stage: "New", owner: "Unassigned", updated: "8 min ago", amount: "$625,000", tone: "mint" },
-  { id: 2, name: "Luis Martinez", initials: "LM", email: "luis.martinez@example.com", phone: "(571) 555-0142", source: "Realtor referral", stage: "Contacted", owner: "A. Singh", updated: "42 min ago", amount: "$410,000", tone: "blue" },
-  { id: 3, name: "Nora Chen", initials: "NC", email: "nora.chen@example.com", phone: "(202) 555-0169", source: "Website", stage: "Application", owner: "You", updated: "2 hr ago", amount: "$785,000", tone: "rose" },
-  { id: 4, name: "Ethan Williams", initials: "EW", email: "ethan.williams@example.com", phone: "(301) 555-0108", source: "Past client", stage: "Pre-approved", owner: "You", updated: "Yesterday", amount: "$520,000", tone: "amber" },
-  { id: 5, name: "Sofia Patel", initials: "SP", email: "sofia.patel@example.com", phone: "(703) 555-0196", source: "CSV import", stage: "Nurture", owner: "J. Reed", updated: "Yesterday", amount: "$350,000", tone: "violet" },
-];
+type Lead = { id: string; name: string; initials: string; email: string; phone: string; source: string; stage: string; owner: string; updated: string; amount: string; amountValue: number; tone: string };
+type StoredLead = { leadId: string; firstName: string; lastName: string; email: string; phone: string; source: string; stage: string; ownerStaffId: string; requestedLoanAmount: number; updatedAt: string };
+type CreateLeadInput = { firstName: string; lastName: string; email: string; phone: string; source: string; requestedLoanAmount?: number };
 
 const navigation = [
   { label: "Leads", icon: "leads" }, { label: "Partners & referrals", icon: "partners" },
@@ -47,6 +42,9 @@ function Icon({ name }: { name: string }) {
 }
 
 export function App() {
+  const api = useAuthenticatedApi();
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leadStatus, setLeadStatus] = useState("Loading stored leads…");
   const [activeModule, setActiveModule] = useState("Leads");
   const [activeFilter, setActiveFilter] = useState("All leads");
   const [query, setQuery] = useState("");
@@ -60,6 +58,43 @@ export function App() {
     window.addEventListener("beforeinstallprompt", capturePrompt);
     return () => window.removeEventListener("beforeinstallprompt", capturePrompt);
   }, []);
+
+  async function refreshLeads() {
+    setLeadStatus("Loading stored leads…");
+    try {
+      const response = await api("/api/v1/leads", { cache: "no-store" });
+      const body = await response.json() as { items?: StoredLead[]; error?: string };
+      if (!response.ok) throw new Error(body.error ?? "Stored leads could not be loaded.");
+      const tones = ["mint", "blue", "rose", "amber", "violet"];
+      setLeads((body.items ?? []).map((lead, index) => {
+        const name = [lead.firstName, lead.lastName].filter(Boolean).join(" ") || lead.email || lead.phone;
+        const initials = [lead.firstName, lead.lastName].filter(Boolean).map((value) => value[0]).join("").toUpperCase() || "L";
+        return {
+          id: lead.leadId, name, initials, email: lead.email, phone: lead.phone,
+          source: lead.source, stage: titleCase(lead.stage),
+          owner: lead.ownerStaffId || "Unassigned", updated: formatUpdated(lead.updatedAt),
+          amount: formatCurrency(lead.requestedLoanAmount), amountValue: lead.requestedLoanAmount,
+          tone: tones[index % tones.length],
+        };
+      }));
+      setLeadStatus("");
+    } catch (caught) {
+      setLeadStatus(caught instanceof Error ? caught.message : "Stored leads could not be loaded.");
+    }
+  }
+
+  useEffect(() => { void refreshLeads(); }, [api]);
+
+  async function saveLead(input: CreateLeadInput) {
+    const response = await api("/api/v1/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
+      body: JSON.stringify(input),
+    });
+    const body = await response.json() as { error?: string };
+    if (!response.ok) throw new Error(body.error ?? "The lead could not be saved.");
+    await refreshLeads();
+  }
 
   const filteredLeads = useMemo(() => leads.filter((lead) => {
     const q = query.trim().toLowerCase();
@@ -81,7 +116,7 @@ export function App() {
         <p className="nav-label">Manage</p>
         {navigation.slice(4).map((item) => <NavItem {...item} active={activeModule === item.label} key={item.label} onClick={() => chooseModule(item.label)}/>)}
       </nav>
-      <div className="sidebar-footer"><span className="health-dot"/> All systems operational<small>CRM v0.1.5 · Azure</small></div>
+      <div className="sidebar-footer"><span className="health-dot"/> All systems operational<small>CRM v0.2.1 · Azure</small></div>
     </aside>
     <div className="workspace">
       <header className="topbar">
@@ -92,16 +127,16 @@ export function App() {
       {activeModule === "Leads" ? <main className="content">
         <div className="page-title-row"><div><p className="breadcrumb">CRM / Leads</p><h1>Leads</h1><p>Review, assign, and move every opportunity forward.</p></div><div className="page-actions"><button className="secondary" type="button">Import</button><button className="primary" type="button" onClick={() => setDrawerOpen(true)}>＋ Add lead</button></div></div>
         {setupVisible && <section className="setup-strip"><div className="setup-copy"><span className="setup-symbol">✓</span><div><strong>Your CRM is ready. Finish the essentials.</strong><p>Complete these once, then this guide stays out of your way.</p></div></div><div className="setup-steps"><button className="done" type="button">Organization <span>✓</span></button><button type="button" onClick={() => chooseModule("Settings")}>Add staff <b>1/—</b></button><button type="button" onClick={() => chooseModule("Connections")}>Connect a source <b>Next</b></button><button type="button" onClick={() => chooseModule("Automations")}>Assignment rules</button></div><button className="dismiss" type="button" onClick={() => setSetupVisible(false)} aria-label="Dismiss setup guide">×</button></section>}
-        <section className="metrics" aria-label="Lead summary"><Metric label="Open pipeline" value="24" note="+$1.2M this week"/><Metric label="New & unassigned" value="7" note="3 need attention" attention/><Metric label="Follow-ups due" value="4" note="Today"/><Metric label="Applications" value="9" note="37% of pipeline"/></section>
+        <section className="metrics" aria-label="Lead summary"><Metric label="Open pipeline" value={String(leads.length)} note={formatCurrency(leads.reduce((sum, lead) => sum + lead.amountValue, 0))}/><Metric label="New & unassigned" value={String(leads.filter((lead) => lead.owner === "Unassigned").length)} note="Stored in your Azure account"/><Metric label="Follow-ups due" value="0" note="Tasks will appear here"/><Metric label="Applications" value="0" note="POS module coming later"/></section>
         <section className="lead-panel">
           <div className="lead-tabs" role="tablist">{["All leads", "My leads", "Unassigned", "Duplicates"].map((filter) => <button role="tab" aria-selected={activeFilter === filter} className={activeFilter === filter ? "active" : ""} type="button" key={filter} onClick={() => setActiveFilter(filter)}>{filter}{filter === "Unassigned" && <span>7</span>}</button>)}</div>
           <div className="table-tools"><label><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search this view"/></label><div><button type="button">Filter</button><button type="button">Sort: Updated</button><button type="button" aria-label="Table settings">•••</button></div></div>
-          <div className="table-wrap"><table><thead><tr><th><input type="checkbox" aria-label="Select all leads"/></th><th>Borrower</th><th>Source</th><th>Stage</th><th>Loan amount</th><th>Owner</th><th>Last activity</th><th/></tr></thead><tbody>{filteredLeads.map((lead) => <tr key={lead.id}><td><input type="checkbox" aria-label={`Select ${lead.name}`}/></td><td><div className="borrower"><span className={`avatar ${lead.tone}`}>{lead.initials}</span><span><strong>{lead.name}</strong><small>{lead.email} · {lead.phone}</small></span></div></td><td><span className="source">{lead.source}</span></td><td><span className={`stage ${lead.stage.toLowerCase().replace("-", "")}`}>{lead.stage}</span></td><td>{lead.amount}</td><td className={lead.owner === "Unassigned" ? "unassigned" : ""}>{lead.owner}</td><td>{lead.updated}</td><td><button className="row-menu" type="button">•••</button></td></tr>)}</tbody></table>{filteredLeads.length === 0 && <div className="no-results"><strong>No leads match this view.</strong><span>Clear the search or choose a different lead view.</span></div>}</div>
-          <div className="table-footer"><span>Showing {filteredLeads.length} of 24 leads</span><div><button disabled type="button">‹</button><button className="active" type="button">1</button><button type="button">2</button><button type="button">3</button><button type="button">›</button></div></div>
-        </section><p className="prototype-note">Interface preview with sample data — do not enter confidential borrower information.</p>
+          <div className="table-wrap"><table><thead><tr><th><input type="checkbox" aria-label="Select all leads"/></th><th>Borrower</th><th>Source</th><th>Stage</th><th>Loan amount</th><th>Owner</th><th>Last activity</th><th/></tr></thead><tbody>{filteredLeads.map((lead) => <tr key={lead.id}><td><input type="checkbox" aria-label={`Select ${lead.name}`}/></td><td><div className="borrower"><span className={`avatar ${lead.tone}`}>{lead.initials}</span><span><strong>{lead.name}</strong><small>{lead.email} · {lead.phone}</small></span></div></td><td><span className="source">{lead.source}</span></td><td><span className={`stage ${lead.stage.toLowerCase().replace("-", "")}`}>{lead.stage}</span></td><td>{lead.amount}</td><td className={lead.owner === "Unassigned" ? "unassigned" : ""}>{lead.owner}</td><td>{lead.updated}</td><td><button className="row-menu" type="button">•••</button></td></tr>)}</tbody></table>{filteredLeads.length === 0 && <div className="no-results"><strong>{leadStatus || "No leads yet."}</strong><span>{leadStatus ? "Try refreshing this page." : "Create the first lead to verify customer-owned storage."}</span></div>}</div>
+          <div className="table-footer"><span>Showing {filteredLeads.length} stored lead{filteredLeads.length === 1 ? "" : "s"}</span><div><button disabled type="button">‹</button><button className="active" type="button">1</button><button disabled type="button">›</button></div></div>
+        </section><p className="prototype-note">Lead records are read from your customer-owned Azure storage through the authenticated API.</p>
       </main> : <ModulePreview activeModule={activeModule}/>}
     </div>
-    {drawerOpen && <LeadDrawer onClose={() => setDrawerOpen(false)}/>}
+    {drawerOpen && <LeadDrawer onClose={() => setDrawerOpen(false)} onSave={saveLead}/>}
     {mobileNavOpen && <button className="scrim" type="button" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)}/>}
   </div>;
 }
@@ -109,4 +144,11 @@ export function App() {
 function NavItem({ label, icon, count, active, onClick }: { label: string; icon: string; count?: number; active: boolean; onClick: () => void }) { return <button className={active ? "active" : ""} type="button" onClick={onClick}><Icon name={icon}/><span>{label}</span>{count && <em>{count}</em>}</button>; }
 function Metric({ label, value, note, attention = false }: { label: string; value: string; note: string; attention?: boolean }) { return <article><span>{label}</span><strong>{value}</strong><small className={attention ? "attention" : ""}>{note}</small></article>; }
 function ModulePreview({ activeModule }: { activeModule: string }) { const item = moduleContent[activeModule]; return <main className="content module-preview"><div className="page-title-row"><div><p className="breadcrumb">CRM / {activeModule}</p><h1>{item.title}</h1><p>{item.description}</p></div></div><section className="module-grid">{item.actions.map((action, index) => <button type="button" key={action}><span className="module-number">0{index + 1}</span><strong>{action}</strong><small>Open {action.toLowerCase()} workspace</small><b>→</b></button>)}</section><section className="module-message"><p className="eyebrow">{item.eyebrow}</p><h2>This workspace is intentionally quiet.</h2><p>We are reviewing navigation, hierarchy, and task flow before connecting this module to Azure services.</p></section></main>; }
-function LeadDrawer({ onClose }: { onClose: () => void }) { return <div className="drawer-layer"><button className="drawer-scrim" type="button" aria-label="Close" onClick={onClose}/><aside className="drawer"><div className="drawer-heading"><div><p className="eyebrow">New CRM record</p><h2>Add a lead</h2></div><button type="button" onClick={onClose}>×</button></div><p className="drawer-intro">Start with the person. Loan and property details can be added without creating duplicate contacts.</p><form onSubmit={(event) => { event.preventDefault(); onClose(); }}><div className="two-fields"><label>First name<input required placeholder="First name"/></label><label>Last name<input required placeholder="Last name"/></label></div><label>Email<input type="email" placeholder="name@example.com"/></label><label>Phone<input type="tel" placeholder="(000) 000-0000"/></label><div className="two-fields"><label>Lead source<select defaultValue="manual"><option value="manual">Manual entry</option><option>MRC</option><option>Referral</option><option>Website</option></select></label><label>Assign to<select defaultValue="unassigned"><option value="unassigned">Unassigned</option><option>Me</option><option>Round robin</option></select></label></div><label>Notes<textarea rows={4} placeholder="What should the team know?"/></label><div className="drawer-actions"><button className="secondary" type="button" onClick={onClose}>Cancel</button><button className="primary" type="submit">Save lead</button></div></form></aside></div>; }
+function LeadDrawer({ onClose, onSave }: { onClose: () => void; onSave: (lead: CreateLeadInput) => Promise<void> }) {
+  const [saving, setSaving] = useState(false); const [error, setError] = useState("");
+  return <div className="drawer-layer"><button className="drawer-scrim" type="button" aria-label="Close" onClick={onClose}/><aside className="drawer"><div className="drawer-heading"><div><p className="eyebrow">New CRM record</p><h2>Add a lead</h2></div><button type="button" onClick={onClose}>×</button></div><p className="drawer-intro">Start with the person. Loan and property details can be added without creating duplicate contacts.</p><form onSubmit={(event) => { event.preventDefault(); setSaving(true); setError(""); const data = new FormData(event.currentTarget); void onSave({ firstName: String(data.get("firstName") ?? ""), lastName: String(data.get("lastName") ?? ""), email: String(data.get("email") ?? ""), phone: String(data.get("phone") ?? ""), source: String(data.get("source") ?? "manual") }).then(onClose).catch((caught) => { setSaving(false); setError(caught instanceof Error ? caught.message : "The lead could not be saved."); }); }}><div className="two-fields"><label>First name<input name="firstName" required placeholder="First name"/></label><label>Last name<input name="lastName" required placeholder="Last name"/></label></div><label>Email<input name="email" type="email" placeholder="name@example.com"/></label><label>Phone<input name="phone" type="tel" placeholder="(000) 000-0000"/></label><div className="two-fields"><label>Lead source<select name="source" defaultValue="manual"><option value="manual">Manual entry</option><option value="MRC">MRC</option><option value="referral">Referral</option><option value="website">Website</option></select></label><label>Assign to<select defaultValue="unassigned" disabled><option value="unassigned">Unassigned</option></select></label></div>{error && <p className="authentication-error" role="alert">{error}</p>}<div className="drawer-actions"><button className="secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save lead"}</button></div></form></aside></div>;
+}
+
+function formatCurrency(value: number) { return value > 0 ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value) : "—"; }
+function formatUpdated(value: string) { if (!value) return "—"; const date = new Date(value); return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString(); }
+function titleCase(value: string) { return value ? `${value[0].toUpperCase()}${value.slice(1)}` : "New"; }

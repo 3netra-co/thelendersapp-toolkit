@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "package": "crm-core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "apis": [{ "spec": "api/openapi.yaml", "basePath": "/api/v1" }],
   "events": {
     "publishes": [

@@ -82,6 +82,25 @@ def create_lead(req: func.HttpRequest) -> func.HttpResponse:
     )
 
 
+@app.route(route="api/v1/leads", methods=["GET"])
+def list_leads(req: func.HttpRequest) -> func.HttpResponse:
+    """Return stored lead projections for the signed-in organization."""
+    try:
+        user = validate_access_token(bearer_token(req.headers.get("Authorization")))
+        service = PlatformService(AzureStore())
+        established = service.establish_session(user)
+        result = service.list_leads(established)
+    except AuthenticationError as error:
+        return _problem(str(error), 401, authenticate=True)
+    except AuthorizationError as error:
+        return _problem(str(error), 403)
+    return func.HttpResponse(
+        body=json.dumps({"items": result, "count": len(result)}),
+        status_code=200,
+        mimetype="application/json",
+    )
+
+
 @app.route(route="api/v1/leads/import", methods=["POST"])
 def import_leads(req: func.HttpRequest) -> func.HttpResponse:
     """Import up to 1,000 leads through the same command pipeline."""

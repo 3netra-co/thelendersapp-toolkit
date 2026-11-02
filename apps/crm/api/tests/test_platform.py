@@ -55,6 +55,9 @@ class PlatformServiceTests(TestCase):
         self.assertEqual(lead["phone"], "7035550184")
         self.assertEqual(len(self.store.messages), 1)
         self.assertEqual(self.store.messages[0][1]["eventType"], "lead.created.v1")
+        listed = self.service.list_leads(session)
+        self.assertEqual(len(listed), 1)
+        self.assertEqual(listed[0]["leadId"], first["leadId"])
 
     @mock.patch.dict(os.environ, {"CRM_BOOTSTRAP_OWNER_OBJECT_ID": "owner-id"}, clear=True)
     def test_workflow_creates_one_task_and_one_run(self) -> None:

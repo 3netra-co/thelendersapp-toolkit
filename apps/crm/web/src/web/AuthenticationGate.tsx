@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { PublicClientApplication, type AccountInfo } from "@azure/msal-browser";
 import "./authentication.css";
 
@@ -18,6 +18,15 @@ type Session = {
 
 type AuthenticationGateProps = { children: ReactNode };
 
+type AuthenticatedApi = (path: string, init?: RequestInit) => Promise<Response>;
+const AuthenticatedApiContext = createContext<AuthenticatedApi | null>(null);
+
+export function useAuthenticatedApi() {
+  const api = useContext(AuthenticatedApiContext);
+  if (!api) throw new Error("The authenticated API is unavailable before sign-in.");
+  return api;
+}
+
 export function AuthenticationGate({ children }: AuthenticationGateProps) {
   const [configuration, setConfiguration] = useState<EntraConfiguration>();
   const [client, setClient] = useState<PublicClientApplication>();
@@ -25,6 +34,15 @@ export function AuthenticationGate({ children }: AuthenticationGateProps) {
   const [session, setSession] = useState<Session>();
   const [status, setStatus] = useState("Preparing secure sign-in…");
   const [error, setError] = useState("");
+  const authenticatedApi = useMemo<AuthenticatedApi | null>(() => {
+    if (!client || !configuration || !account || !session) return null;
+    return async (path, init = {}) => {
+      const token = await client.acquireTokenSilent({ account, scopes: [configuration.scope] });
+      const headers = new Headers(init.headers);
+      headers.set("Authorization", `Bearer ${token.accessToken}`);
+      return fetch(path, { ...init, headers });
+    };
+  }, [account, client, configuration, session]);
 
   useEffect(() => {
     let active = true;
@@ -85,7 +103,7 @@ export function AuthenticationGate({ children }: AuthenticationGateProps) {
     }
   };
 
-  if (session) {
+  if (session && authenticatedApi) {
     const signedInAs = session.displayName ?? session.username ?? "Microsoft user";
     return (
       <>
@@ -93,7 +111,9 @@ export function AuthenticationGate({ children }: AuthenticationGateProps) {
           <span>Signed in as <strong>{signedInAs}</strong></span>
           <button type="button" onClick={() => void client?.logoutRedirect({ account })}>Sign out</button>
         </aside>
-        {children}
+        <AuthenticatedApiContext.Provider value={authenticatedApi}>
+          {children}
+        </AuthenticatedApiContext.Provider>
       </>
     );
   }

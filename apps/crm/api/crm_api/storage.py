@@ -16,6 +16,7 @@ from azure.storage.queue import QueueServiceClient
 
 class Store(Protocol):
     def get(self, table: str, partition: str, row: str) -> dict[str, Any] | None: ...
+    def list_partition(self, table: str, partition: str) -> list[dict[str, Any]]: ...
     def create(self, table: str, entity: dict[str, Any]) -> bool: ...
     def upsert(self, table: str, entity: dict[str, Any]) -> None: ...
     def put_json(self, container: str, name: str, value: dict[str, Any]) -> bool: ...
@@ -51,6 +52,15 @@ class AzureStore:
             return dict(self.tables.get_table_client(table).get_entity(partition, row))
         except ResourceNotFoundError:
             return None
+
+    def list_partition(self, table: str, partition: str) -> list[dict[str, Any]]:
+        escaped = partition.replace("'", "''")
+        return [
+            dict(entity)
+            for entity in self.tables.get_table_client(table).query_entities(
+                query_filter=f"PartitionKey eq '{escaped}'"
+            )
+        ]
 
     def create(self, table: str, entity: dict[str, Any]) -> bool:
         try:
@@ -88,6 +98,13 @@ class MemoryStore:
     def get(self, table: str, partition: str, row: str) -> dict[str, Any] | None:
         value = self.entities.get((table, partition, row))
         return dict(value) if value else None
+
+    def list_partition(self, table: str, partition: str) -> list[dict[str, Any]]:
+        return [
+            dict(value)
+            for (entity_table, entity_partition, _), value in self.entities.items()
+            if entity_table == table and entity_partition == partition
+        ]
 
     def create(self, table: str, entity: dict[str, Any]) -> bool:
         key = (table, str(entity["PartitionKey"]), str(entity["RowKey"]))
